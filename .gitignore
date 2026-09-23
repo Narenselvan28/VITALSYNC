@@ -22,5 +22,10 @@ $RECYCLE.BIN/
 .vscode/
 .idea/
 
+# Node.js dependencies & builds
+node_modules/
+dist/
+
 # Binary installers
 *.exe
+*.deb

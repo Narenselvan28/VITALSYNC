@@ -25,11 +25,24 @@ class EarlyWarningState:
         self.history = deque(maxlen=persistence_window)
         self.current_escalated_level = "LOW"
         self.consecutive_abnormal_count = 0
+        now_ts = datetime.datetime.utcnow()
+        self.timeline: List[Dict[str, Any]] = [
+            {
+                "time": now_ts.strftime("%H:%M:%S"),
+                "timestamp": now_ts.isoformat() + "Z",
+                "level": "LOW",
+                "event": "NORMAL",
+                "details": "All physiological parameters tracking within personal baseline.",
+            }
+        ]
+
+    def get_timeline(self, limit: int = 30) -> List[Dict[str, Any]]:
+        return list(reversed(self.timeline))[:limit]
 
     def evaluate(self, ml_predictions: Dict[str, Any], features: Dict[str, Any]) -> Dict[str, Any]:
         """
         Evaluates current ML predictions against temporal history and multi-parameter synergy.
-        Returns escalated risk states with transparent reasoning.
+        Returns escalated risk states with transparent reasoning and timeline events.
         """
         raw_overall = ml_predictions["overall_health_risk"]
         raw_level = raw_overall["risk_level"]
@@ -135,7 +148,23 @@ class EarlyWarningState:
                 escalated_level = "LOW"
                 reasons.append("All primary physiological and environmental parameters within personal baseline")
 
+        # Track timeline event if state escalated or de-escalated
+        prev_level = self.current_escalated_level
         self.current_escalated_level = escalated_level
+
+        now = datetime.datetime.utcnow()
+        if escalated_level != prev_level:
+            event_name = f"Overall Risk → {escalated_level.replace('_', ' ')}"
+            detail_msg = reasons[0] if reasons else f"State transitioned from {prev_level} to {escalated_level}"
+            self.timeline.append({
+                "time": now.strftime("%H:%M:%S"),
+                "timestamp": now.isoformat() + "Z",
+                "level": escalated_level,
+                "event": event_name,
+                "details": detail_msg,
+            })
+            if len(self.timeline) > 60:
+                self.timeline.pop(0)
 
         return {
             "escalated_level": escalated_level,
@@ -143,7 +172,8 @@ class EarlyWarningState:
             "persistence_count": self.consecutive_abnormal_count,
             "deviating_parameter_count": deviating_count,
             "reasons": reasons,
-            "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
+            "timeline": self.get_timeline(15),
+            "timestamp": now.isoformat() + "Z",
         }
 
 _early_warning_states: Dict[str, EarlyWarningState] = {}

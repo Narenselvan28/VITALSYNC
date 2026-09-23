@@ -26,6 +26,8 @@ from backend.api.websocket_manager import ws_manager
 router = APIRouter(prefix="/api")
 
 _last_iot_timestamps: Dict[str, datetime.datetime] = {}
+_packet_counts: Dict[str, int] = {}
+_last_readings: Dict[str, Dict[str, Any]] = {}
 
 def get_iot_device_status(device_id: str = "ESP32-001") -> str:
     last_ts = _last_iot_timestamps.get(device_id)
@@ -45,6 +47,10 @@ async def _execute_unified_pipeline(reading_dict: Dict[str, Any], origin: str = 
     db = get_db()
     model_registry = get_model_registry()
     device_id = reading_dict.get("device_id", "ESP32-001")
+
+    # Record packet counts & last readings
+    _packet_counts[device_id] = _packet_counts.get(device_id, 0) + 1
+    _last_readings[device_id] = dict(reading_dict)
 
     # Record IoT device liveness if packet originated from real IoT device
     if origin == "IOT" and not reading_dict.get("is_simulator"):
@@ -103,11 +109,13 @@ async def _execute_unified_pipeline(reading_dict: Dict[str, Any], origin: str = 
         "reading_id": reading_id,
         "device_id": device_id,
         "device_status": get_iot_device_status(device_id),
+        "packets_received": _packet_counts.get(device_id, 0),
         "timestamp": reading_dict["timestamp"],
         "raw_sensors": reading_dict,
         "features": features,
         "ml_predictions": ml_preds,
         "escalation": escalated_eval,
+        "timeline": escalated_eval.get("timeline", []),
         "baseline_summary": features.get("baseline_summary", {}),
         "active_alert": alert_engine.get_latest_alert(),
     }
@@ -193,7 +201,7 @@ def get_latest_ml_prediction(device_id: str = "ESP32-001"):
 
 @router.get("/risk/current")
 def get_current_risk(device_id: str = "ESP32-001"):
-    """Returns the current risk state, escalated level, device status, and explanations."""
+    """Returns the current risk state, escalated level, device status, timeline, and explanations."""
     ew_state = get_early_warning_state(device_id)
     alert_engine = get_alert_engine()
     db = get_db()
@@ -202,13 +210,21 @@ def get_current_risk(device_id: str = "ESP32-001"):
     return {
         "device_id": device_id,
         "device_status": get_iot_device_status(device_id),
+        "packets_received": _packet_counts.get(device_id, 0),
         "current_escalated_level": ew_state.current_escalated_level,
         "persistence_count": ew_state.consecutive_abnormal_count,
         "active_alert": alert_engine.get_latest_alert(),
         "latest_prediction": latest_pred,
+        "timeline": ew_state.get_timeline(15),
         "medical_disclaimer": "This prototype provides health-risk and anomaly indicators and is not a medical diagnostic device.",
         "framing": "This prototype provides health-risk and anomaly indicators and is not a medical diagnostic device."
     }
+
+@router.get("/risk/timeline")
+def get_risk_timeline(device_id: str = "ESP32-001", limit: int = 30):
+    """Returns early-warning progression timeline events."""
+    ew_state = get_early_warning_state(device_id)
+    return ew_state.get_timeline(limit=limit)
 
 @router.get("/risk/history")
 def get_risk_history(limit: int = 50):
@@ -314,15 +330,28 @@ def register_device(device_req: DeviceRegisterSchema):
 
 @router.get("/device/status")
 def get_device_status(device_id: str = "ESP32-001"):
-    """Returns IoT device connection status and liveness."""
+    """Returns IoT device connection status, packet count, and individual sensor liveness."""
     last_ts = _last_iot_timestamps.get(device_id)
     status = get_iot_device_status(device_id)
+    last_reading = _last_readings.get(device_id, {})
     return {
         "device_id": device_id,
         "device_status": status,
         "is_online": status == "ONLINE",
         "last_iot_timestamp": last_ts.isoformat() + "Z" if last_ts else None,
+        "packets_received": _packet_counts.get(device_id, 0),
+        "processing_node": "Raspberry Pi 4 / Edge Node",
         "server_status": "ONLINE",
+        "sensors": {
+            "max30102": "DATA" if last_reading.get("heart_rate") else "NO DATA",
+            "adxl345": "DATA" if "accel_z" in last_reading else "NO DATA",
+            "body_temp": "DATA" if last_reading.get("body_temperature") else "NO DATA",
+            "ambient_temp": "DATA" if "ambient_temperature" in last_reading else "NO DATA",
+            "humidity": "DATA" if "humidity" in last_reading else "NO DATA",
+            "mq45": "DATA" if "mq45" in last_reading else "NO DATA",
+            "gps": "FIX" if last_reading.get("latitude") and last_reading.get("longitude") else "NO FIX",
+        },
+        "last_reading": last_reading
     }
 
 @router.get("/health")
@@ -332,7 +361,8 @@ def system_health():
     db = get_db()
     return {
         "status": "ONLINE",
-        "system": "AAROGYA-SHIELD Edge-AI",
+        "system": "VITALSYNC Edge-AI",
+        "project": "VITALSYNC",
         "processing_node": "Raspberry Pi 4 / Edge Node",
         "device_status": get_iot_device_status("ESP32-001"),
         "models_loaded": model_registry.loaded,

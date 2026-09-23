@@ -321,6 +321,80 @@ class ModelRegistry:
         if not top_factors:
             top_factors = ["All physiological indicators within baseline norms"]
 
+        # Compute granular ranked "Why did the model change?" contributing model features
+        spo2_dev = features.get("spo2_deviation", 0.0)
+        hr_dev = features.get("hr_deviation", 0.0)
+        temp_dev = features.get("temp_deviation", 0.0)
+        mq45_val = features.get("mq45", 180.0)
+        heat_idx = features.get("heat_index", 28.0)
+        act_st = features.get("activity_state", 0)
+
+        why_items = []
+        if spo2_dev < -0.015:
+            imp = min(0.45, abs(spo2_dev) * 3.8)
+            why_items.append({
+                "weight": round(imp, 2),
+                "impact": f"+{imp:.2f}",
+                "feature": "SpO2 below personal baseline",
+                "detail": f"{features.get('spo2', 98)}% ({round(spo2_dev*100, 1)}% from baseline)"
+            })
+        if hr_dev > 0.05:
+            imp = min(0.35, hr_dev * 0.9)
+            why_items.append({
+                "weight": round(imp, 2),
+                "impact": f"+{imp:.2f}",
+                "feature": "Heart rate increasing above baseline",
+                "detail": f"{int(features.get('heart_rate', 72))} BPM (+{round(hr_dev*100, 1)}%)"
+            })
+        if mq45_val > 280:
+            imp = min(0.35, (mq45_val - 250) / 1100)
+            why_items.append({
+                "weight": round(imp, 2),
+                "impact": f"+{imp:.2f}",
+                "feature": "High environmental exposure indicator",
+                "detail": f"MQ-45 Index: {int(mq45_val)}"
+            })
+        if temp_dev > 0.3:
+            imp = min(0.30, temp_dev * 0.16)
+            why_items.append({
+                "weight": round(imp, 2),
+                "impact": f"+{imp:.2f}",
+                "feature": "Core temperature deviation",
+                "detail": f"+{round(temp_dev, 1)}°C above baseline"
+            })
+        if heat_idx > 34:
+            imp = min(0.25, (heat_idx - 32) * 0.02)
+            why_items.append({
+                "weight": round(imp, 2),
+                "impact": f"+{imp:.2f}",
+                "feature": "High ambient heat-stress context",
+                "detail": f"Heat index: {round(heat_idx, 1)}°C"
+            })
+        if act_st == 4:
+            why_items.append({
+                "weight": 0.45,
+                "impact": "+0.45",
+                "feature": "Sudden acceleration impact (Fall Candidate)",
+                "detail": "ADXL345 high-g vector spike"
+            })
+        elif act_st >= 2:
+            imp = 0.14 if act_st == 2 else 0.22
+            why_items.append({
+                "weight": round(imp, 2),
+                "impact": f"+{imp:.2f}",
+                "feature": f"Elevated physical activity strain ({features.get('activity_label', 'ACTIVE')})",
+                "detail": "Increased metabolic demand"
+            })
+
+        why_items.sort(key=lambda x: x["weight"], reverse=True)
+        if not why_items:
+            why_items = [{
+                "weight": 0.0,
+                "impact": "+0.00",
+                "feature": "All parameters within personal baseline",
+                "detail": "Nominal physiological balance"
+            }]
+
         overall = {
             "name": "Overall Health Risk",
             "score": overall_score,
@@ -329,6 +403,7 @@ class ModelRegistry:
             "contributing_features": {
                 "top_drivers": top_factors,
                 "overall_score": overall_score,
+                "why_explanations": why_items,
             },
             "timestamp": ts,
             "model_version": self.version_info.get("version", "1.0.0-edge"),
@@ -342,6 +417,7 @@ class ModelRegistry:
             "heat_stress_risk": heat_stress,
             "fatigue_strain_risk": fatigue,
             "environmental_exposure_risk": environmental,
+            "why_explanations": why_items,
             "timestamp": ts,
             "model_version": self.version_info.get("version", "1.0.0-edge"),
             "framing_disclaimer": "This prototype provides health-risk and anomaly indicators. It is not a medical diagnostic device.",

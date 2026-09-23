@@ -5,6 +5,7 @@ and initializes baseline, database, and machine learning components on startup.
 """
 
 import os
+from contextlib import asynccontextmanager
 import uvicorn
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,10 +18,40 @@ from backend.ml.model_registry import get_model_registry
 from backend.db.database import get_db
 from backend.core.baseline_engine import get_device_baseline
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("=" * 60)
+    print("  VITALSYNC: Edge-AI Health Monitoring & Early-Warning System")
+    print("  Host: Raspberry Pi 4 Edge Target")
+    print("  Hardware Nodes: ESP32 (MAX30102, ADXL345, MQ-45, GPS)")
+    print("  Status: Initializing models, database, and baselines...")
+    print("=" * 60)
+    
+    # Pre-load ML models
+    registry = get_model_registry()
+    print(f"[Startup] ML models ready. Active version: {registry.version_info.get('version', '1.0.0-edge')}")
+    
+    # Pre-connect to MongoDB
+    db = get_db()
+    
+    # Initialize default device baseline
+    baseline = get_device_baseline("ESP32-001")
+    db.save_baseline(baseline.to_dict())
+    
+    # Register default device
+    db.register_device("ESP32-001", {
+        "device_type": "ESP32-Edge-Wearable",
+        "sensors": ["MAX30102", "ADXL345", "DHT22", "MQ-45", "NEO-6M GPS"],
+        "node_ip": "192.168.1.104",
+    })
+    print("[Startup] Initialization complete. VITALSYNC Server ready.")
+    yield
+
 app = FastAPI(
-    title="AAROGYA-SHIELD Edge-AI API",
+    title="VITALSYNC Edge-AI API",
     description="Edge-AI personal health monitoring and early-warning system prototype",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 # Enable CORS for local edge and browser clients
@@ -55,39 +86,16 @@ if os.path.exists(FRONTEND_DIR):
     # Mount static assets
     app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
 
-    # Serve index.html on root and /test
+    # Serve index.html on root, /test, /monitor, /lab, /alerts, /device
     @app.get("/", include_in_schema=False)
     @app.get("/test", include_in_schema=False)
+    @app.get("/monitor", include_in_schema=False)
+    @app.get("/lab", include_in_schema=False)
+    @app.get("/alerts", include_in_schema=False)
+    @app.get("/device", include_in_schema=False)
     async def serve_index():
         return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
 
-@app.on_event("startup")
-async def startup_event():
-    print("=" * 60)
-    print("  AAROGYA-SHIELD: Edge-AI Health Monitoring System")
-    print("  Host: Raspberry Pi 4 Edge Target")
-    print("  Hardware Nodes: ESP32 (MAX30102, ADXL345, MQ-45, GPS)")
-    print("  Status: Initializing models, database, and baselines...")
-    print("=" * 60)
-    
-    # Pre-load ML models
-    registry = get_model_registry()
-    print(f"[Startup] ML models ready. Active version: {registry.version_info.get('version', '1.0.0-edge')}")
-    
-    # Pre-connect to MongoDB
-    db = get_db()
-    
-    # Initialize default device baseline
-    baseline = get_device_baseline("ESP32-001")
-    db.save_baseline(baseline.to_dict())
-    
-    # Register default device
-    db.register_device("ESP32-001", {
-        "device_type": "ESP32-Edge-Wearable",
-        "sensors": ["MAX30102", "ADXL345", "DHT22", "MQ-45", "NEO-6M GPS"],
-        "node_ip": "192.168.1.104",
-    })
-    print("[Startup] Initialization complete. Server ready.")
-
 if __name__ == "__main__":
     uvicorn.run("backend.main:app", host="0.0.0.0", port=8000, reload=True)
+

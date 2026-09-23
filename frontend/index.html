@@ -3,874 +3,1151 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AAROGYA-SHIELD — Edge-AI Clinical Monitoring Terminal</title>
-  <meta name="description" content="Edge-AI personal health monitoring and early-warning terminal for multi-modal physiological and environmental risk screening.">
+  <title>VITALSYNC — Edge-AI Personal Health Monitoring & Early-Warning Control Room</title>
+  <meta name="description" content="VITALSYNC Edge-AI personal health monitoring and early-warning control room for real-time physiological anomaly screening.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/styles.css">
 </head>
-<body class="theme-terminal">
-  <!-- System Shell Container -->
-  <div class="terminal-shell">
+<body class="theme-light">
+  <div class="app-container">
 
-    <!-- Top Utility Bar (Level 1 Elevation) -->
-    <header class="terminal-nav">
-      <div class="nav-left">
-        <div class="brand-glyph">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-            <path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z"/>
-            <path d="M9 12l2 2 4-4"/>
+    <!-- Top Application Bar -->
+    <header class="app-header">
+      <div class="header-brand">
+        <div class="brand-symbol">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
           </svg>
         </div>
-        <div class="brand-text">
-          <span class="brand-name">AAROGYA<span class="brand-divider">/</span>SHIELD</span>
-          <span class="brand-tag">EDGE-AI INSTRUMENT</span>
-        </div>
-        <span class="system-status-pill">
-          <span class="pulse-dot" id="system-status-dot"></span>
-          <span id="system-status-text">ONLINE</span>
-        </span>
-      </div>
-
-      <div class="nav-center">
-        <div class="telemetry-node-chip">
-          <span class="chip-label">NODE</span>
-          <span class="chip-val" id="processing-node-badge">RPi 4 / EDGE</span>
-        </div>
-        <span class="chip-sep">/</span>
-        <div class="telemetry-node-chip">
-          <span class="chip-label">DEVICE</span>
-          <span class="chip-val font-mono" id="device-id-badge">ESP32-001</span>
-        </div>
-        <span class="chip-sep">/</span>
-        <div class="telemetry-node-chip">
-          <span class="chip-label">ESP32</span>
-          <span class="chip-val font-mono" id="iot-status-badge">ONLINE</span>
-        </div>
-        <span class="chip-sep">/</span>
-        <div class="telemetry-node-chip">
-          <span class="chip-label">SYNC</span>
-          <span class="chip-val font-mono" id="last-sync-time">Live</span>
+        <div class="brand-meta">
+          <div class="brand-title-row">
+            <span class="brand-title">VITALSYNC</span>
+            <span class="brand-badge font-mono">EDGE-AI</span>
+          </div>
+          <span class="brand-subtitle">Edge Health Monitoring System</span>
         </div>
       </div>
 
-      <div class="nav-right">
-        <div class="view-nav-tabs">
-          <button id="tab-btn-dashboard" class="nav-tab-btn active" title="Switch to Live Monitoring Dashboard">Dashboard</button>
-          <button id="tab-btn-pipeline" class="nav-tab-btn" title="Switch to Pipeline Trace & Simulator Test Panel">Test Panel</button>
+      <!-- Navigation Tabs -->
+      <nav class="nav-tabs" aria-label="Main Navigation">
+        <button class="nav-tab active" data-view="overview" id="tab-overview">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          Overview
+        </button>
+        <button class="nav-tab" data-view="monitor" id="tab-monitor">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Live Monitor
+        </button>
+        <button class="nav-tab" data-view="lab" id="tab-lab">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"/><line x1="8.5" y1="2" x2="15.5" y2="2"/></svg>
+          Test Lab
+        </button>
+        <button class="nav-tab" data-view="alerts" id="tab-alerts">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          Alerts
+          <span class="alerts-count-badge hidden" id="nav-alerts-badge">0</span>
+        </button>
+        <button class="nav-tab" data-view="device" id="tab-device">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M15 9h.01"/><path d="M15 15h.01"/><path d="M9 15h.01"/></svg>
+          Device
+        </button>
+      </nav>
+
+      <!-- System Telemetry Status -->
+      <div class="header-telemetry font-mono">
+        <div class="node-chip" title="Hardware Acquisition Node">
+          <span class="chip-key">DEV:</span>
+          <span class="chip-val" id="top-device-id">ESP32-001</span>
         </div>
-        <div class="mode-selector">
-          <button id="btn-iot-mode" class="mode-switch-btn active" title="Ingest physical telemetry via ESP32 endpoint">
-            <span class="mode-dot"></span>
-            <span>IoT Live</span>
-          </button>
-          <button id="btn-simulator-mode" class="mode-switch-btn" title="Enable browser sensor dials & scenario injection">
-            <span>Simulator</span>
-          </button>
+        <div class="node-chip" title="Edge Compute Host">
+          <span class="chip-key">NODE:</span>
+          <span class="chip-val">Raspberry Pi 4</span>
         </div>
+        <div class="node-chip status-chip" id="top-conn-chip" title="WebSocket Live Telemetry Status">
+          <span class="pulse-dot" id="top-conn-dot"></span>
+          <span class="chip-val" id="top-conn-text">LIVE</span>
+        </div>
+        <div class="node-chip time-chip" id="top-clock">--:--:--</div>
       </div>
     </header>
 
-    <!-- Sub-Nav Metadata Bar (Level 0 Elevation) -->
-    <div class="meta-subbar">
-      <div class="subbar-disclaimer">
-        <span class="meta-tag">CLINICAL NOTICE</span>
-        <span class="disclaimer-text">This prototype provides health-risk and anomaly indicators and is not a medical diagnostic device.</span>
+
+    <!-- Caretaker Emergency Banner (Visible when active unacknowledged alert exists) -->
+    <div id="caretaker-banner" class="caretaker-banner hidden" role="alert">
+      <div class="banner-left">
+        <div class="banner-alert-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <div class="banner-text-block">
+          <div class="banner-title-row">
+            <span class="severity-tag" id="banner-severity">ELEVATED</span>
+            <span class="banner-risk-type" id="banner-risk-type">Physiological Anomaly</span>
+            <span class="banner-time font-mono" id="banner-time">Just now</span>
+            <span class="banner-id font-mono" id="banner-id">ALT-00000000</span>
+          </div>
+          <div class="banner-message" id="banner-message">Multiple physiological parameters are deviating from baseline.</div>
+          <div class="banner-reasons font-mono" id="banner-reasons"></div>
+        </div>
       </div>
-      <div class="subbar-baseline">
-        <span class="baseline-indicator font-mono" id="baseline-chip-text">Personal Baseline: Active (50 Samples)</span>
-        <button id="btn-recalibrate-baseline" class="btn-hairline-sm">Recalibrate</button>
+      <div class="banner-right">
+        <div class="banner-coords font-mono" id="banner-location">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <span id="banner-coords-text">10.662° N, 76.891° E</span>
+        </div>
+        <button id="btn-banner-ack" class="btn-ack">Acknowledge</button>
       </div>
     </div>
 
-    <!-- High-Priority Caretaker Alert Banner -->
-    <aside id="caretaker-banner" class="emergency-alert-strip hidden" role="alert">
-      <div class="emergency-left">
-        <div class="emergency-icon-wrap">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-            <line x1="12" y1="9" x2="12" y2="13"/>
-            <line x1="12" y1="17" x2="12.01" y2="17"/>
-          </svg>
-        </div>
-        <div class="emergency-details">
-          <div class="emergency-headline">
-            <span class="severity-badge" id="banner-risk-level">CRITICAL</span>
-            <span class="emergency-type" id="banner-risk-type">Physiological Anomaly</span>
-            <span class="emergency-id font-mono" id="banner-alert-id">ALT-00000000</span>
-            <span class="emergency-time font-mono" id="banner-alert-time">Just now</span>
-          </div>
-          <p class="emergency-msg" id="banner-alert-msg">Critical physiological anomaly detected. Immediate attention required.</p>
-          <div class="emergency-reasons font-mono" id="banner-alert-reasons"></div>
-        </div>
-      </div>
-      <div class="emergency-right">
-        <span class="geo-coord font-mono" id="banner-alert-location">10.662° N, 76.891° E</span>
-        <button id="btn-banner-ack" class="btn-emergency-ack">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-          Acknowledge Alert
-        </button>
-      </div>
-    </aside>
+    <!-- MAIN VIEW CONTAINER -->
+    <main class="main-viewport">
 
-    <!-- Asymmetric Instrument Grid: Left Hero & Telemetry (~74%) | Right Controls (320px) -->
-    <main class="terminal-workspace">
-
-      <!-- LEFT COLUMN: Primary Telemetry Core -->
-      <div class="cockpit-primary">
-
-        <!-- 1. Hero: Physiological Risk State (Massive Scale) -->
-        <section class="panel hero-status-panel">
-          <div class="panel-header">
-            <div class="panel-header-left">
-              <span class="section-tag">01 // OVERVIEW</span>
-              <h2>PHYSIOLOGICAL RISK STATE</h2>
+      <!-- =================================================================== -->
+      <!-- VIEW 1: OVERVIEW                                                    -->
+      <!-- =================================================================== -->
+      <section id="view-overview" class="view-panel active">
+        
+        <!-- Main Status Card -->
+        <div class="overview-hero-card">
+          <div class="hero-header-row">
+            <div>
+              <span class="hero-eyebrow">CURRENT HEALTH STATUS</span>
+              <div class="hero-status-row">
+                <span class="status-badge-lg badge-normal" id="ov-status-badge">NORMAL</span>
+                <div class="hero-score-box">
+                  <span class="score-caption font-mono">RISK SCORE</span>
+                  <span class="score-number font-mono" id="ov-risk-score">0.10</span>
+                </div>
+              </div>
             </div>
-            <div class="panel-header-right">
-              <span class="stat-pill font-mono" id="overall-confidence">Confidence: 94%</span>
+            <div class="hero-trend-box font-mono">
+              <span class="trend-caption">RISK TREND</span>
+              <div class="trend-value-row" id="ov-risk-trend-row">
+                <span class="trend-arrow" id="ov-trend-arrow">→</span>
+                <span class="trend-text" id="ov-trend-text">Stable</span>
+              </div>
+              <span class="confidence-text font-mono" id="ov-confidence">Model Confidence: 94%</span>
             </div>
           </div>
 
-          <div class="hero-status-content">
-            <!-- Left: Massive Editorial Status & Score -->
-            <div class="hero-left-col">
-              <div class="hero-metric-display">
-                <span class="metric-caption">EVALUATED HEALTH RISK LEVEL</span>
-                <div class="hero-level-wrap">
-                  <h1 class="hero-level-text level-low" id="overall-risk-badge">LOW</h1>
-                  <div class="hero-score-badge">
-                    <span class="score-label">SCORE</span>
-                    <span class="score-number font-mono" id="overall-score-display">0.12</span>
+          <!-- Linear Spectrum Risk Meter -->
+          <div class="risk-spectrum-container">
+            <div class="risk-spectrum-bar">
+              <div class="spectrum-fill" id="ov-spectrum-fill" style="width: 10%;"></div>
+            </div>
+            <div class="risk-spectrum-labels font-mono">
+              <span class="spec-label mark-normal">NORMAL</span>
+              <span class="spec-label mark-warning">EARLY WARNING</span>
+              <span class="spec-label mark-elevated">ELEVATED RISK</span>
+              <span class="spec-label mark-critical">CRITICAL</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Compact Physiological Strip -->
+        <div class="section-card">
+          <div class="card-header">
+            <h3>PHYSIOLOGICAL PARAMETERS</h3>
+            <span class="header-note font-mono">Real-time vitals vs individual baseline</span>
+          </div>
+          <div class="metrics-strip">
+            <!-- Heart Rate -->
+            <div class="strip-item">
+              <span class="strip-label">HEART RATE</span>
+              <div class="strip-val-row">
+                <span class="strip-val font-mono" id="ov-hr-val">74</span>
+                <span class="strip-unit">BPM</span>
+              </div>
+              <div class="strip-meta font-mono" id="ov-hr-dev">
+                <span class="meta-trend">→</span> 0 BPM from baseline
+              </div>
+              <span class="strip-submeta font-mono" id="ov-hr-sub">Baseline: 72 BPM</span>
+            </div>
+
+            <!-- SpO2 -->
+            <div class="strip-item">
+              <span class="strip-label">SpO2 OXYGEN</span>
+              <div class="strip-val-row">
+                <span class="strip-val font-mono" id="ov-spo2-val">98</span>
+                <span class="strip-unit">%</span>
+              </div>
+              <div class="strip-meta font-mono" id="ov-spo2-dev">
+                <span class="meta-trend">→</span> 0.0% from baseline
+              </div>
+              <span class="strip-submeta font-mono" id="ov-spo2-sub">PPG Quality: 0.95</span>
+            </div>
+
+            <!-- Body Temperature -->
+            <div class="strip-item">
+              <span class="strip-label">BODY TEMP</span>
+              <div class="strip-val-row">
+                <span class="strip-val font-mono" id="ov-temp-val">36.7</span>
+                <span class="strip-unit">°C</span>
+              </div>
+              <div class="strip-meta font-mono" id="ov-temp-dev">
+                <span class="meta-trend">→</span> 0.0°C from baseline
+              </div>
+              <span class="strip-submeta font-mono" id="ov-temp-sub">98.1°F</span>
+            </div>
+
+            <!-- Activity -->
+            <div class="strip-item">
+              <span class="strip-label">ACTIVITY</span>
+              <div class="strip-val-row">
+                <span class="strip-val font-mono" id="ov-act-val">REST</span>
+              </div>
+              <div class="strip-meta font-mono" id="ov-act-dev">
+                Mag: <strong id="ov-act-mag">0.98g</strong>
+              </div>
+              <span class="strip-submeta font-mono" id="ov-act-sub">ADXL345 Active</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Compact Environment Strip -->
+        <div class="section-card">
+          <div class="card-header">
+            <h3>ENVIRONMENTAL CONTEXT</h3>
+            <span class="header-note font-mono">Ambient exposure & thermal strain context</span>
+          </div>
+          <div class="metrics-strip">
+            <div class="strip-item">
+              <span class="strip-label">AMBIENT TEMPERATURE</span>
+              <div class="strip-val-row">
+                <span class="strip-val font-mono" id="ov-amb-val">28.0</span>
+                <span class="strip-unit">°C</span>
+              </div>
+              <div class="strip-meta font-mono" id="ov-heat-idx">Heat Index: 29.5°C</div>
+            </div>
+
+            <div class="strip-item">
+              <span class="strip-label">RELATIVE HUMIDITY</span>
+              <div class="strip-val-row">
+                <span class="strip-val font-mono" id="ov-hum-val">60</span>
+                <span class="strip-unit">%</span>
+              </div>
+              <div class="strip-meta font-mono">Nominal indoor/outdoor range</div>
+            </div>
+
+            <div class="strip-item strip-item-wide">
+              <span class="strip-label">ENVIRONMENTAL EXPOSURE INDICATOR (MQ-45)</span>
+              <div class="strip-val-row">
+                <span class="strip-val font-mono" id="ov-mq-val">180</span>
+                <span class="status-chip chip-normal font-mono" id="ov-mq-badge">NORMAL</span>
+              </div>
+              <div class="strip-meta font-mono" id="ov-mq-desc">Atmospheric baseline (uncalibrated exposure indicator)</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2-Column Split: Risk Matrix (Left) & Early Warning Timeline + Caretaker (Right) -->
+        <div class="overview-dual-grid">
+
+          <!-- Risk Matrix Table -->
+          <div class="section-card">
+            <div class="card-header">
+              <h3>RISK MATRIX</h3>
+              <span class="header-note font-mono">Click row to inspect contributing features</span>
+            </div>
+            <div class="table-container">
+              <table class="risk-matrix-table" id="risk-matrix-table">
+                <thead>
+                  <tr>
+                    <th>MODEL / SUBSYSTEM</th>
+                    <th>STATUS</th>
+                    <th>SCORE</th>
+                    <th>TREND</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr data-risk-key="respiratory_risk" class="risk-row">
+                    <td class="col-name"><strong>Respiratory Risk</strong></td>
+                    <td><span class="status-chip chip-normal font-mono" id="rm-resp-badge">LOW</span></td>
+                    <td class="font-mono" id="rm-resp-score">0.08</td>
+                    <td class="font-mono" id="rm-resp-trend">→</td>
+                  </tr>
+                  <tr data-risk-key="oxygenation_anomaly" class="risk-row">
+                    <td class="col-name"><strong>Oxygenation Anomaly</strong></td>
+                    <td><span class="status-chip chip-normal font-mono" id="rm-oxy-badge">LOW</span></td>
+                    <td class="font-mono" id="rm-oxy-score">0.08</td>
+                    <td class="font-mono" id="rm-oxy-trend">→</td>
+                  </tr>
+                  <tr data-risk-key="heat_stress_risk" class="risk-row">
+                    <td class="col-name"><strong>Heat-Stress Risk</strong></td>
+                    <td><span class="status-chip chip-normal font-mono" id="rm-heat-badge">LOW</span></td>
+                    <td class="font-mono" id="rm-heat-score">0.10</td>
+                    <td class="font-mono" id="rm-heat-trend">→</td>
+                  </tr>
+                  <tr data-risk-key="fatigue_strain_risk" class="risk-row">
+                    <td class="col-name"><strong>Fatigue / Activity Strain</strong></td>
+                    <td><span class="status-chip chip-normal font-mono" id="rm-fatigue-badge">LOW</span></td>
+                    <td class="font-mono" id="rm-fatigue-score">0.10</td>
+                    <td class="font-mono" id="rm-fatigue-trend">→</td>
+                  </tr>
+                  <tr data-risk-key="environmental_exposure_risk" class="risk-row">
+                    <td class="col-name"><strong>Environmental Exposure</strong></td>
+                    <td><span class="status-chip chip-normal font-mono" id="rm-env-badge">LOW</span></td>
+                    <td class="font-mono" id="rm-env-score">0.10</td>
+                    <td class="font-mono" id="rm-env-trend">→</td>
+                  </tr>
+                  <tr data-risk-key="general_health_anomaly" class="risk-row">
+                    <td class="col-name"><strong>General Health Anomaly</strong></td>
+                    <td><span class="status-chip chip-normal font-mono" id="rm-gen-badge">LOW</span></td>
+                    <td class="font-mono" id="rm-gen-score">0.12</td>
+                    <td class="font-mono" id="rm-gen-trend">→</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Row Detail Expandable Box -->
+            <div id="matrix-detail-box" class="matrix-detail-box hidden font-mono">
+              <div class="detail-box-header">
+                <span class="detail-title" id="md-title">Respiratory Risk Details</span>
+                <button id="btn-close-md" class="btn-close-sm">&times;</button>
+              </div>
+              <div class="detail-grid">
+                <div>Model Version: <strong id="md-version">1.0.0-edge</strong></div>
+                <div>Confidence: <strong id="md-conf">99%</strong></div>
+                <div>Timestamp: <strong id="md-time">--</strong></div>
+              </div>
+              <div class="detail-contributing">
+                <span class="detail-subtitle">Contributing Features:</span>
+                <ul id="md-features-list"></ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Early Warning Timeline & Caretaker Widget -->
+          <div class="right-stack">
+
+            <!-- Early Warning Timeline -->
+            <div class="section-card">
+              <div class="card-header">
+                <h3>EARLY WARNING TIMELINE</h3>
+                <span class="header-note font-mono">State Progression Audit</span>
+              </div>
+              <div class="timeline-container" id="overview-timeline-list">
+                <div class="timeline-item">
+                  <div class="timeline-bullet mark-normal"></div>
+                  <div class="timeline-content">
+                    <div class="timeline-time font-mono">Live</div>
+                    <div class="timeline-title">NORMAL</div>
+                    <div class="timeline-desc">All physiological parameters tracking within personal baseline.</div>
                   </div>
                 </div>
               </div>
+            </div>
 
-              <!-- Linear Progress Track -->
-              <div class="progress-track-wrapper">
-                <svg class="linear-progress-svg" viewBox="0 0 100 6" preserveAspectRatio="none">
-                  <line x1="0" y1="3" x2="100" y2="3" stroke="rgba(255,255,255,0.06)" stroke-width="5"/>
-                  <line id="overall-gauge-fill" x1="0" y1="3" x2="12" y2="3" stroke="var(--emerald)" stroke-width="5"/>
-                </svg>
-                <div class="progress-ticks font-mono">
-                  <span>NOMINAL</span>
-                  <span>EARLY WARNING</span>
-                  <span>ELEVATED</span>
-                  <span>CRITICAL</span>
-                </div>
+            <!-- In-Page Caretaker Alert Card -->
+            <div class="section-card">
+              <div class="card-header">
+                <h3>CARETAKER NOTIFICATION</h3>
               </div>
-
-              <!-- Persistence Line -->
-              <div class="persistence-meta-line">
-                <span class="meta-label">PERSISTENCE:</span>
-                <span class="meta-val" id="escalation-trend-summary">Stable baseline. Temporal persistence: Nominal.</span>
+              <div class="caretaker-widget-body" id="caretaker-widget-content">
+                <div class="no-alerts-placeholder font-mono">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>
+                  <span>No active alerts. System nominal.</span>
+                </div>
               </div>
             </div>
 
-            <!-- Right: Primary Contributing Risk Factors & Sub-meters -->
-            <div class="hero-right-col">
-              <span class="factors-caption">PRIMARY RISK DRIVERS & DEVIATIONS</span>
-              <ul class="factors-ledger" id="hero-contributing-factors">
-                <li>All physiological parameters tracking within individual personal baseline.</li>
-              </ul>
+          </div>
+        </div>
 
-              <!-- Sub-Meter Grid -->
-              <div class="sub-meter-grid">
-                <div class="sub-meter-card">
-                  <span class="sub-meter-title">Respiratory</span>
-                  <div class="sub-meter-bar"><div id="meter-respiratory" class="sub-meter-fill" style="width: 15%;"></div></div>
-                  <span class="sub-meter-tag font-mono" id="meter-respiratory-val">LOW</span>
-                </div>
-                <div class="sub-meter-card">
-                  <span class="sub-meter-title">Oxygenation</span>
-                  <div class="sub-meter-bar"><div id="meter-oxygenation" class="sub-meter-fill" style="width: 10%;"></div></div>
-                  <span class="sub-meter-tag font-mono" id="meter-oxygenation-val">LOW</span>
-                </div>
-                <div class="sub-meter-card">
-                  <span class="sub-meter-title">Heat-Stress</span>
-                  <div class="sub-meter-bar"><div id="meter-heat" class="sub-meter-fill" style="width: 12%;"></div></div>
-                  <span class="sub-meter-tag font-mono" id="meter-heat-val">LOW</span>
-                </div>
-                <div class="sub-meter-card">
-                  <span class="sub-meter-title">Activity-Strain</span>
-                  <div class="sub-meter-bar"><div id="meter-fatigue" class="sub-meter-fill" style="width: 8%;"></div></div>
-                  <span class="sub-meter-tag font-mono" id="meter-fatigue-val">LOW</span>
-                </div>
-                <div class="sub-meter-card">
-                  <span class="sub-meter-title">Environment</span>
-                  <div class="sub-meter-bar"><div id="meter-environment" class="sub-meter-fill" style="width: 18%;"></div></div>
-                  <span class="sub-meter-tag font-mono" id="meter-environment-val">LOW</span>
-                </div>
+        <!-- Live Trend Chart Section with Tabs & Time Range -->
+        <div class="section-card">
+          <div class="card-header chart-header-row">
+            <div>
+              <h3>PHYSIOLOGICAL TREND OSCILLOSCOPE</h3>
+              <span class="header-note font-mono">Personal baseline displayed as dotted reference</span>
+            </div>
+            <div class="chart-controls">
+              <!-- Signal Selector Tabs -->
+              <div class="chart-tabs font-mono" id="chart-tabs">
+                <button class="chart-tab active" data-signal="hr">Heart Rate</button>
+                <button class="chart-tab" data-signal="spo2">SpO2</button>
+                <button class="chart-tab" data-signal="body_temperature">Body Temp</button>
+                <button class="chart-tab" data-signal="ambient_temperature">Ambient Temp</button>
+                <button class="chart-tab" data-signal="humidity">Humidity</button>
+                <button class="chart-tab" data-signal="mq45">MQ-45</button>
+                <button class="chart-tab" data-signal="overall_risk">Overall Risk</button>
+              </div>
+              <!-- Time Range Selector -->
+              <div class="time-range-buttons font-mono">
+                <button class="range-btn active" data-range="5">5m</button>
+                <button class="range-btn" data-range="15">15m</button>
+                <button class="range-btn" data-range="30">30m</button>
+                <button class="range-btn" data-range="60">1h</button>
               </div>
             </div>
           </div>
-        </section>
-
-        <!-- 2. Four High-Precision Vitals Cards with Sparkline / Trend Indicators -->
-        <div class="vitals-matrix">
-          <!-- Heart Rate -->
-          <div class="vital-cell">
-            <div class="cell-topbar">
-              <div class="cell-header">
-                <span class="vital-dot pulse-heart"></span>
-                <span class="vital-label">HEART RATE</span>
-              </div>
-              <span class="trend-indicator-pill font-mono" id="hr-dev-badge">
-                <span class="trend-arrow">→</span> 0.0%
-              </span>
-            </div>
-            <div class="cell-value-line">
-              <span class="vital-num font-mono" id="val-heart-rate">75</span>
-              <span class="vital-unit">BPM</span>
-              <!-- Mini visual sparkline track -->
-              <div class="mini-sparkline-track">
-                <div class="sparkline-bar" style="height: 45%;"></div>
-                <div class="sparkline-bar" style="height: 52%;"></div>
-                <div class="sparkline-bar" style="height: 48%;"></div>
-                <div class="sparkline-bar" style="height: 60%;"></div>
-                <div class="sparkline-bar active-bar" style="height: 50%;"></div>
-              </div>
-            </div>
-            <div class="cell-bottom-meta font-mono">
-              <span>BASE <strong id="base-hr-mean">72.0</strong></span>
-              <span id="hr-zscore-span">Z: 0.2</span>
-            </div>
-          </div>
-
-          <!-- SpO2 -->
-          <div class="vital-cell">
-            <div class="cell-topbar">
-              <div class="cell-header">
-                <span class="vital-dot vital-dot-emerald"></span>
-                <span class="vital-label">SpO2 OXYGEN</span>
-              </div>
-              <span class="trend-indicator-pill font-mono" id="spo2-dev-badge">
-                <span class="trend-arrow">→</span> 0.0%
-              </span>
-            </div>
-            <div class="cell-value-line">
-              <span class="vital-num font-mono" id="val-spo2">98</span>
-              <span class="vital-unit">%</span>
-              <div class="mini-sparkline-track">
-                <div class="sparkline-bar" style="height: 85%;"></div>
-                <div class="sparkline-bar" style="height: 88%;"></div>
-                <div class="sparkline-bar" style="height: 86%;"></div>
-                <div class="sparkline-bar" style="height: 90%;"></div>
-                <div class="sparkline-bar active-bar" style="height: 88%;"></div>
-              </div>
-            </div>
-            <div class="cell-bottom-meta font-mono">
-              <span>BASE <strong id="base-spo2-mean">98.0</strong>%</span>
-              <span>PPG Q: <strong id="val-ppg-quality">0.95</strong></span>
-            </div>
-          </div>
-
-          <!-- Body Temperature -->
-          <div class="vital-cell">
-            <div class="cell-topbar">
-              <div class="cell-header">
-                <span class="vital-dot vital-dot-amber"></span>
-                <span class="vital-label">CORE BODY TEMP</span>
-              </div>
-              <span class="trend-indicator-pill font-mono" id="temp-dev-badge">
-                <span class="trend-arrow">→</span> 0.0°C
-              </span>
-            </div>
-            <div class="cell-value-line">
-              <span class="vital-num font-mono" id="val-body-temp">36.8</span>
-              <span class="vital-unit">°C</span>
-              <div class="mini-sparkline-track">
-                <div class="sparkline-bar" style="height: 60%;"></div>
-                <div class="sparkline-bar" style="height: 62%;"></div>
-                <div class="sparkline-bar" style="height: 59%;"></div>
-                <div class="sparkline-bar" style="height: 64%;"></div>
-                <div class="sparkline-bar active-bar" style="height: 62%;"></div>
-              </div>
-            </div>
-            <div class="cell-bottom-meta font-mono">
-              <span>BASE <strong id="base-temp-mean">36.7</strong>°C</span>
-              <span id="temp-f-span">98.2°F</span>
-            </div>
-          </div>
-
-          <!-- Environment -->
-          <div class="vital-cell">
-            <div class="cell-topbar">
-              <div class="cell-header">
-                <span class="vital-dot vital-dot-cyan"></span>
-                <span class="vital-label">ENVIRONMENT</span>
-              </div>
-              <span class="trend-indicator-pill font-mono" id="heat-index-badge">HI 29.5°C</span>
-            </div>
-            <div class="cell-dual-values font-mono">
-              <div>
-                <span class="dual-num" id="val-ambient-temp">28.0</span><small>°C</small>
-                <span class="dual-sub">AMBIENT</span>
-              </div>
-              <div class="dual-sep"></div>
-              <div>
-                <span class="dual-num" id="val-ambient-humidity">60</span><small>%</small>
-                <span class="dual-sub">HUMIDITY</span>
-              </div>
-              <div class="dual-sep"></div>
-              <div>
-                <span class="dual-num" id="val-mq45">180</span><small>IDX</small>
-                <span class="dual-sub" id="mq45-status-pill">MQ-45</span>
-              </div>
-            </div>
-            <div class="cell-bottom-meta font-mono">
-              <span>EXPOSURE: <strong id="mq45-exposure-desc">Baseline Air</strong></span>
+          <div class="chart-canvas-wrap">
+            <canvas id="overview-chart-canvas" height="220"></canvas>
+            <div class="chart-meta-bar font-mono">
+              <span>CURRENT: <strong id="chart-current-val">74 BPM</strong></span>
+              <span>BASELINE MEAN: <strong id="chart-baseline-val">72.0 BPM</strong></span>
+              <span>DEVIATION: <strong id="chart-dev-val">+2.0 BPM (+2.8%)</strong></span>
+              <span class="live-pulse-badge">● STREAMING</span>
             </div>
           </div>
         </div>
 
-        <!-- 3. Multi-Parametric Waveform Oscilloscope -->
-        <section class="panel oscilloscope-panel">
-          <div class="panel-header">
-            <div class="panel-header-left">
-              <span class="section-tag">02 // TELEMETRY</span>
-              <h2>MULTI-SIGNAL TIME SERIES OSCILLOSCOPE</h2>
+      </section>
+
+      <!-- =================================================================== -->
+      <!-- VIEW 2: LIVE MONITOR (Hardware Operation Display)                   -->
+      <!-- =================================================================== -->
+      <section id="view-monitor" class="view-panel">
+        
+        <!-- Connectivity Bar -->
+        <div class="monitor-conn-bar font-mono">
+          <div class="conn-item">
+            <span class="conn-dot dot-green" id="mon-esp-dot"></span>
+            <span>ESP32: <strong id="mon-esp-status">CONNECTED</strong></span>
+          </div>
+          <div class="conn-item">
+            <span class="conn-dot dot-green"></span>
+            <span>Raspberry Pi: <strong>ONLINE (EDGE)</strong></span>
+          </div>
+          <div class="conn-item">
+            <span class="conn-dot dot-green"></span>
+            <span>ML Engine: <strong>RUNNING (XGBoost+Ensemble)</strong></span>
+          </div>
+          <div class="conn-item">
+            <span class="conn-dot dot-green" id="mon-ws-dot"></span>
+            <span>WebSocket: <strong id="mon-ws-status">STREAMING</strong></span>
+          </div>
+          <div class="conn-item time-item">
+            <span>PACKETS: <strong id="mon-packet-count">0</strong></span>
+          </div>
+        </div>
+
+        <!-- 3-Column Monitor Layout -->
+        <div class="monitor-grid">
+          
+          <!-- LEFT: Raw Sensor Telemetry -->
+          <div class="section-card monitor-col-sensors">
+            <div class="card-header">
+              <h3>RAW SENSOR TELEMETRY</h3>
+              <span class="header-note font-mono">ESP32 Ingestion</span>
             </div>
-            <div class="oscilloscope-legend font-mono">
-              <span class="legend-item mark-active" data-series="hr"><span class="legend-mark mark-hr"></span> HR</span>
-              <span class="legend-item mark-active" data-series="spo2"><span class="legend-mark mark-spo2"></span> SpO2</span>
-              <span class="legend-item mark-active" data-series="temp"><span class="legend-mark mark-temp"></span> Core Temp</span>
-              <span class="legend-item mark-active" data-series="amb_temp"><span class="legend-mark mark-amb"></span> Amb Temp</span>
-              <span class="legend-item mark-active" data-series="humidity"><span class="legend-mark mark-hum"></span> Humidity</span>
-              <span class="legend-item mark-active" data-series="mq45"><span class="legend-mark mark-mq"></span> MQ-45</span>
-              <span class="legend-item mark-active" data-series="risk"><span class="legend-mark mark-risk"></span> Risk</span>
+            <div class="sensor-readout-stack font-mono">
+              <div class="readout-row">
+                <span class="ro-key">Heart Rate (MAX30102)</span>
+                <span class="ro-val"><strong id="mon-hr">74</strong> BPM</span>
+              </div>
+              <div class="readout-row">
+                <span class="ro-key">SpO2 Oxygen (MAX30102)</span>
+                <span class="ro-val"><strong id="mon-spo2">98</strong> %</span>
+              </div>
+              <div class="readout-row">
+                <span class="ro-key">PPG Quality Index</span>
+                <span class="ro-val"><strong id="mon-ppg">0.95</strong></span>
+              </div>
+              <div class="readout-row">
+                <span class="ro-key">Body Temp (Core)</span>
+                <span class="ro-val"><strong id="mon-temp">36.7</strong> °C</span>
+              </div>
+              <div class="readout-row">
+                <span class="ro-key">Ambient Temp</span>
+                <span class="ro-val"><strong id="mon-amb">28.0</strong> °C</span>
+              </div>
+              <div class="readout-row">
+                <span class="ro-key">Ambient Humidity</span>
+                <span class="ro-val"><strong id="mon-hum">60</strong> %</span>
+              </div>
+              <div class="readout-row">
+                <span class="ro-key">Heat Index Calc</span>
+                <span class="ro-val"><strong id="mon-hi">29.5</strong> °C</span>
+              </div>
+              <div class="readout-row">
+                <span class="ro-key">MQ-45 Exposure</span>
+                <span class="ro-val"><strong id="mon-mq">180</strong></span>
+              </div>
+              <div class="readout-row">
+                <span class="ro-key">ADXL345 (Ax, Ay, Az)</span>
+                <span class="ro-val" id="mon-accel">+0.02, +0.01, +0.98</span>
+              </div>
+              <div class="readout-row">
+                <span class="ro-key">Acceleration Magnitude</span>
+                <span class="ro-val"><strong id="mon-mag">0.98g</strong></span>
+              </div>
+              <div class="readout-row">
+                <span class="ro-key">Activity State</span>
+                <span class="ro-val"><strong id="mon-act">REST</strong></span>
+              </div>
+              <div class="readout-row">
+                <span class="ro-key">GPS Location</span>
+                <span class="ro-val" id="mon-gps">10.662, 76.891</span>
+              </div>
             </div>
           </div>
-          <!-- Canvas with grid overlay and gradient underfill -->
-          <div class="canvas-viewport">
-            <canvas id="live-telemetry-canvas" height="190"></canvas>
-            <div class="canvas-time-axis font-mono">
+
+          <!-- CENTER: Live Multi-Waveform Oscilloscope -->
+          <div class="section-card monitor-col-center">
+            <div class="card-header">
+              <h3>LIVE PHYSIOLOGICAL OSCILLOSCOPE</h3>
+              <div class="oscilloscope-keys font-mono">
+                <span class="osc-key key-hr">● HR</span>
+                <span class="osc-key key-spo2">● SpO2</span>
+                <span class="osc-key key-temp">● Temp</span>
+                <span class="osc-key key-risk">● Risk</span>
+              </div>
+            </div>
+            <div class="monitor-canvas-box">
+              <canvas id="monitor-waveform-canvas" height="320"></canvas>
+            </div>
+            <div class="canvas-axis-labels font-mono">
               <span>-45s</span>
               <span>-30s</span>
               <span>-15s</span>
               <span>LIVE NOW</span>
             </div>
           </div>
-        </section>
 
-        <!-- 4. Clinical Edge-AI Inference Ledger (Zebra Striping & Sticky Header) -->
-        <section class="panel ledger-panel">
-          <div class="panel-header">
-            <div class="panel-header-left">
-              <span class="section-tag">03 // INFERENCE LEDGER</span>
-              <h2>EDGE-AI MODEL ENSEMBLE</h2>
+          <!-- RIGHT: Current Risk & Alerts -->
+          <div class="section-card monitor-col-right">
+            <div class="card-header">
+              <h3>EVALUATED RISK & ALERTS</h3>
             </div>
-            <span class="header-note">Trained on PhysioNet BIDMC clinical numerics + Wearable actigraphy</span>
-          </div>
+            <div class="monitor-risk-summary">
+              <div class="mon-risk-big-badge">
+                <span class="caption">EVALUATED STATE</span>
+                <h2 id="mon-risk-badge-text" class="status-normal">NORMAL</h2>
+                <div class="font-mono mon-score-line">
+                  <span>SCORE: <strong id="mon-risk-score">0.10</strong></span>
+                  <span>TREND: <strong id="mon-risk-trend">→ Stable</strong></span>
+                </div>
+              </div>
 
-          <div class="ledger-table-wrap">
-            <table class="ledger-table">
-              <thead>
-                <tr>
-                  <th>MODEL TARGET</th>
-                  <th>ALGORITHM</th>
-                  <th>SCORE</th>
-                  <th>EVALUATED STATE</th>
-                  <th>CONFIDENCE</th>
-                  <th>CLINICAL INTERPRETATION</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr id="cell-respiratory">
-                  <td class="col-target"><strong>Respiratory Risk</strong></td>
-                  <td><span class="tech-tag font-mono">XGBoost</span></td>
-                  <td><span class="mono-bold font-mono" id="cell-respiratory-score">0.08</span></td>
-                  <td><span class="status-chip chip-low font-mono" id="cell-respiratory-badge">LOW</span></td>
-                  <td class="font-mono" id="cell-respiratory-conf">99%</td>
-                  <td class="interp-text" id="cell-respiratory-desc">SpO2 and respiratory rate in nominal baseline range.</td>
-                </tr>
-                <tr id="cell-oxygenation">
-                  <td class="col-target"><strong>Oxygenation Anomaly</strong></td>
-                  <td><span class="tech-tag font-mono">PhysioNet Rule</span></td>
-                  <td><span class="mono-bold font-mono" id="cell-oxygenation-score">0.08</span></td>
-                  <td><span class="status-chip chip-low font-mono" id="cell-oxygenation-badge">LOW</span></td>
-                  <td class="font-mono" id="cell-oxygenation-conf">96%</td>
-                  <td class="interp-text" id="cell-oxygenation-desc">Peripheral capillary oxygenation conforms to personal baseline.</td>
-                </tr>
-                <tr id="cell-heat">
-                  <td class="col-target"><strong>Heat-Stress / Strain</strong></td>
-                  <td><span class="tech-tag font-mono">XGBoost</span></td>
-                  <td><span class="mono-bold font-mono" id="cell-heat-score">0.10</span></td>
-                  <td><span class="status-chip chip-low font-mono" id="cell-heat-badge">LOW</span></td>
-                  <td class="font-mono" id="cell-heat-conf">99%</td>
-                  <td class="interp-text" id="cell-heat-desc">Combined heat index and core body temperature stable.</td>
-                </tr>
-                <tr id="cell-fatigue">
-                  <td class="col-target"><strong>Fatigue / Activity-Strain</strong></td>
-                  <td><span class="tech-tag font-mono">Actigraphy</span></td>
-                  <td><span class="mono-bold font-mono" id="cell-fatigue-score">0.10</span></td>
-                  <td><span class="status-chip chip-low font-mono" id="cell-fatigue-badge">LOW</span></td>
-                  <td class="font-mono" id="cell-fatigue-conf">88%</td>
-                  <td class="interp-text" id="cell-fatigue-desc">Activity level and cardiac response well tolerated.</td>
-                </tr>
-                <tr id="cell-env">
-                  <td class="col-target"><strong>Environmental Exposure</strong></td>
-                  <td><span class="tech-tag font-mono">GradientBoost</span></td>
-                  <td><span class="mono-bold font-mono" id="cell-env-score">0.10</span></td>
-                  <td><span class="status-chip chip-low font-mono" id="cell-env-badge">LOW</span></td>
-                  <td class="font-mono" id="cell-env-conf">100%</td>
-                  <td class="interp-text" id="cell-env-desc">MQ-45 ambient exposure within baseline atmospheric bounds.</td>
-                </tr>
-                <tr id="cell-general">
-                  <td class="col-target"><strong>General Health Anomaly</strong></td>
-                  <td><span class="tech-tag font-mono">IsoForest+XGB</span></td>
-                  <td><span class="mono-bold font-mono" id="cell-general-score">0.12</span></td>
-                  <td><span class="status-chip chip-low font-mono" id="cell-general-badge">LOW</span></td>
-                  <td class="font-mono" id="cell-general-conf">92%</td>
-                  <td class="interp-text" id="cell-general-desc">Multi-modal isolation forest and ensemble anomaly nominal.</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-      </div>
-
-      <!-- RIGHT COLUMN: Compact Fixed 320px Sidebar (Simulator, Pipeline Trace, Audit) -->
-      <aside class="cockpit-secondary">
-
-        <!-- 5. Real-Time Hardware Simulator Controls -->
-        <section class="panel simulator-panel" id="card-simulator">
-          <div class="panel-header">
-            <div class="panel-header-left">
-              <span class="section-tag section-tag-cyan">04 // SIMULATOR</span>
-              <h2>HARDWARE CONTROLS</h2>
-            </div>
-            <button id="btn-reset-simulator" class="btn-hairline-sm">Reset</button>
-          </div>
-
-          <div class="simulator-body">
-            <!-- Preset Scenario Chips -->
-            <div class="scenario-selector-block">
-              <span class="block-caption">SCENARIO INJECTION</span>
-              <div class="scenario-chips-grid">
-                <button class="chip-btn preset-chip-btn" data-preset="normal">1. Normal</button>
-                <button class="chip-btn preset-chip-btn" data-preset="early_respiratory">2. Early Resp</button>
-                <button class="chip-btn preset-chip-btn" data-preset="elevated_respiratory">3. Elev Resp</button>
-                <button class="chip-btn preset-chip-btn" data-preset="high_environmental">4. High Env</button>
-                <button class="chip-btn preset-chip-btn" data-preset="heat_stress">5. Heat-Stress</button>
-                <button class="chip-btn preset-chip-btn" data-preset="fatigue">6. Fatigue</button>
-                <button class="chip-btn preset-chip-btn" data-preset="recovery">7. Recovery</button>
-                <button class="chip-btn preset-chip-btn" data-preset="critical_multiparameter">8. Critical</button>
+              <!-- Active Alert Box -->
+              <div class="mon-alert-container" id="mon-alert-container">
+                <span class="box-caption">CARETAKER ALERT STATUS:</span>
+                <div id="mon-alert-detail" class="mon-alert-detail font-mono">
+                  No active alerts.
+                </div>
               </div>
             </div>
+          </div>
 
-            <!-- Precision Dials / Tactile Sliders Stack -->
-            <div class="dials-vertical-stack">
+        </div>
+
+        <!-- BOTTOM: ML Reasoning & Contributing Factors -->
+        <div class="section-card">
+          <div class="card-header">
+            <h3>EDGE-AI REASONING & CONTRIBUTING FEATURES</h3>
+            <span class="header-note font-mono">Non-diagnostic feature attributions derived from personal baseline</span>
+          </div>
+          <div class="reasoning-grid" id="monitor-reasoning-grid">
+            <div class="reason-card">
+              <span class="reason-score font-mono">+0.00</span>
+              <div class="reason-text">
+                <strong>All parameters tracking within individual personal baseline.</strong>
+                <span>Nominal cardiac, oxygenation, and environmental exposure levels.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- =================================================================== -->
+      <!-- VIEW 3: TEST LAB (Real-time ML Simulator & Development Panel)       -->
+      <!-- =================================================================== -->
+      <section id="view-lab" class="view-panel">
+
+        <!-- Test Lab Header Bar -->
+        <div class="lab-header-bar">
+          <div class="lab-title-group">
+            <div class="lab-title-row">
+              <h2>ML TEST LAB</h2>
+              <span class="mode-pill font-mono">SIMULATOR ●</span>
+            </div>
+            <span class="lab-subtitle">Direct hardware-identical simulation pipeline: Controls &rarr; Feature Engine &rarr; Baseline &rarr; ML Models &rarr; Risk Engine &rarr; Alerts</span>
+          </div>
+          <div class="lab-meta-group font-mono">
+            <div class="lab-meta-item">
+              <span class="meta-label">BACKEND:</span>
+              <span class="meta-val val-connected" id="lab-backend-status">CONNECTED</span>
+            </div>
+            <div class="lab-meta-item">
+              <span class="meta-label">MODEL:</span>
+              <span class="meta-val">v1.0.0-edge</span>
+            </div>
+            <div class="lab-meta-item">
+              <span class="meta-label">STATUS:</span>
+              <span class="meta-val" id="lab-inference-status">Inference ready</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 2: Preset Scenarios (Placed prominently above controls) -->
+        <div class="section-card">
+          <div class="card-header">
+            <h3>PRESET SCENARIOS</h3>
+            <span class="header-note font-mono">Clicking a preset modifies sensor inputs and runs through real ML backend</span>
+          </div>
+          <div class="preset-buttons-grid">
+            <button class="btn-preset" data-preset="normal">
+              <strong>1. NORMAL HEALTHY</strong>
+              <span>Resting baseline, nominal vitals</span>
+            </button>
+            <button class="btn-preset" data-preset="early_respiratory">
+              <strong>2. EARLY RESPIRATORY</strong>
+              <span>SpO2 drops to 94%, HR 88 BPM</span>
+            </button>
+            <button class="btn-preset" data-preset="elevated_respiratory">
+              <strong>3. ELEVATED RESPIRATORY</strong>
+              <span>SpO2 90%, HR 112, high MQ-45</span>
+            </button>
+            <button class="btn-preset" data-preset="high_environmental">
+              <strong>4. HIGH ENVIRONMENTAL</strong>
+              <span>MQ-45 780, ambient temp 34°C</span>
+            </button>
+            <button class="btn-preset" data-preset="heat_stress">
+              <strong>5. HEAT-STRESS SCENARIO</strong>
+              <span>Amb 43°C, hum 82%, body 39.1°C</span>
+            </button>
+            <button class="btn-preset" data-preset="fatigue">
+              <strong>6. FATIGUE SCENARIO</strong>
+              <span>High activity, HR 132, temp 37.8°C</span>
+            </button>
+            <button class="btn-preset btn-preset-recovery" data-preset="recovery">
+              <strong>7. RECOVERY SCENARIO</strong>
+              <span>Values return toward baseline</span>
+            </button>
+            <button class="btn-preset btn-preset-critical" data-preset="critical">
+              <strong>8. MULTI-PARAM CRITICAL</strong>
+              <span>Hypoxia + tachycardia + heat stress</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- SECTION 1: Live Sensor Control (Two-Column Layout: Left Physiological, Right Environment/Motion) -->
+        <div class="section-card">
+          <div class="card-header">
+            <h3>LIVE SENSOR CONTROL</h3>
+            <div class="controls-header-actions">
+              <span class="header-note font-mono">Both sliders & numeric inputs synchronized with debounced API dispatch</span>
+              <button id="btn-lab-reset" class="btn-subtle-sm">Reset to Normal</button>
+            </div>
+          </div>
+
+          <div class="lab-controls-two-col">
+
+            <!-- LEFT: Physiological Controls -->
+            <div class="controls-col">
+              <div class="col-heading font-mono">PHYSIOLOGICAL INPUTS (MAX30102 / THERMAL)</div>
+              
               <!-- Heart Rate -->
-              <div class="dial-row">
-                <div class="dial-label-row">
-                  <span class="dial-label">Heart Rate (BPM)</span>
-                  <div class="dial-stepper-box">
-                    <button class="btn-step font-mono" data-target="sim-hr" data-delta="-1">-</button>
-                    <input type="number" id="sim-hr-num" min="30" max="220" value="75" class="font-mono">
-                    <button class="btn-step font-mono" data-target="sim-hr" data-delta="1">+</button>
+              <div class="control-row">
+                <div class="control-label-row">
+                  <label for="ctrl-hr-num" class="control-label">Heart Rate (BPM)</label>
+                  <div class="control-input-stepper">
+                    <button class="btn-step" data-target="ctrl-hr" data-delta="-1">-</button>
+                    <input type="number" id="ctrl-hr-num" min="30" max="220" value="74" class="font-mono">
+                    <button class="btn-step" data-target="ctrl-hr" data-delta="1">+</button>
                   </div>
                 </div>
-                <input type="range" id="sim-hr" class="dial-range" min="30" max="220" value="75">
+                <input type="range" id="ctrl-hr" min="30" max="220" value="74" class="slider-control">
               </div>
 
               <!-- SpO2 -->
-              <div class="dial-row">
-                <div class="dial-label-row">
-                  <span class="dial-label">SpO2 Blood Oxygen (%)</span>
-                  <div class="dial-stepper-box">
-                    <button class="btn-step font-mono" data-target="sim-spo2" data-delta="-1">-</button>
-                    <input type="number" id="sim-spo2-num" min="70" max="100" value="98" class="font-mono">
-                    <button class="btn-step font-mono" data-target="sim-spo2" data-delta="1">+</button>
+              <div class="control-row">
+                <div class="control-label-row">
+                  <label for="ctrl-spo2-num" class="control-label">SpO2 Blood Oxygen (%)</label>
+                  <div class="control-input-stepper">
+                    <button class="btn-step" data-target="ctrl-spo2" data-delta="-1">-</button>
+                    <input type="number" id="ctrl-spo2-num" min="70" max="100" value="98" class="font-mono">
+                    <button class="btn-step" data-target="ctrl-spo2" data-delta="1">+</button>
                   </div>
                 </div>
-                <input type="range" id="sim-spo2" class="dial-range" min="70" max="100" value="98">
+                <input type="range" id="ctrl-spo2" min="70" max="100" value="98" class="slider-control">
               </div>
 
-              <!-- PPG Quality -->
-              <div class="dial-row">
-                <div class="dial-label-row">
-                  <span class="dial-label">PPG Signal Quality (0-1)</span>
-                  <div class="dial-stepper-box">
-                    <button class="btn-step font-mono" data-target="sim-ppg" data-delta="-0.05">-</button>
-                    <input type="number" id="sim-ppg-num" step="0.05" min="0.10" max="1.00" value="0.95" class="font-mono">
-                    <button class="btn-step font-mono" data-target="sim-ppg" data-delta="0.05">+</button>
+              <!-- PPG Signal Quality -->
+              <div class="control-row">
+                <div class="control-label-row">
+                  <label for="ctrl-ppg-num" class="control-label">PPG Signal Quality (0.0 - 1.0)</label>
+                  <div class="control-input-stepper">
+                    <button class="btn-step" data-target="ctrl-ppg" data-delta="-0.05">-</button>
+                    <input type="number" id="ctrl-ppg-num" step="0.05" min="0.10" max="1.00" value="0.95" class="font-mono">
+                    <button class="btn-step" data-target="ctrl-ppg" data-delta="0.05">+</button>
                   </div>
                 </div>
-                <input type="range" id="sim-ppg" class="dial-range" step="0.05" min="0.10" max="1.00" value="0.95">
+                <input type="range" id="ctrl-ppg" step="0.05" min="0.10" max="1.00" value="0.95" class="slider-control">
               </div>
 
               <!-- Body Temperature -->
-              <div class="dial-row">
-                <div class="dial-label-row">
-                  <span class="dial-label">Body Temperature (°C)</span>
-                  <div class="dial-stepper-box">
-                    <button class="btn-step font-mono" data-target="sim-temp" data-delta="-0.1">-</button>
-                    <input type="number" id="sim-temp-num" step="0.1" min="34.0" max="42.5" value="36.8" class="font-mono">
-                    <button class="btn-step font-mono" data-target="sim-temp" data-delta="0.1">+</button>
+              <div class="control-row">
+                <div class="control-label-row">
+                  <label for="ctrl-temp-num" class="control-label">Body Temperature (°C)</label>
+                  <div class="control-input-stepper">
+                    <button class="btn-step" data-target="ctrl-temp" data-delta="-0.1">-</button>
+                    <input type="number" id="ctrl-temp-num" step="0.1" min="34.0" max="42.5" value="36.7" class="font-mono">
+                    <button class="btn-step" data-target="ctrl-temp" data-delta="0.1">+</button>
                   </div>
                 </div>
-                <input type="range" id="sim-temp" class="dial-range" step="0.1" min="34.0" max="42.5" value="36.8">
+                <input type="range" id="ctrl-temp" step="0.1" min="34.0" max="42.5" value="36.7" class="slider-control">
               </div>
 
-              <!-- Ambient Temp -->
-              <div class="dial-row">
-                <div class="dial-label-row">
-                  <span class="dial-label">Ambient Temp (°C)</span>
-                  <div class="dial-stepper-box">
-                    <button class="btn-step font-mono" data-target="sim-amb-temp" data-delta="-0.5">-</button>
-                    <input type="number" id="sim-amb-temp-num" step="0.5" min="15.0" max="52.0" value="28.0" class="font-mono">
-                    <button class="btn-step font-mono" data-target="sim-amb-temp" data-delta="0.5">+</button>
+              <!-- Activity State -->
+              <div class="control-row">
+                <div class="control-label-row">
+                  <label for="ctrl-activity-select" class="control-label">Physical Activity State</label>
+                  <span class="status-chip chip-normal font-mono" id="ctrl-activity-chip">REST</span>
+                </div>
+                <select id="ctrl-activity-select" class="select-control font-mono">
+                  <option value="0">REST (Static / Resting)</option>
+                  <option value="1">LIGHT (Sedentary / Gentle Motion)</option>
+                  <option value="2">MODERATE (Walking / Continuous Exercise)</option>
+                  <option value="3">HIGH (Running / Vigorous Strain)</option>
+                  <option value="4">FALL_CANDIDATE (Impact Spike & Inactivity)</option>
+                </select>
+              </div>
+
+            </div>
+
+            <!-- RIGHT: Environment & Motion Controls -->
+            <div class="controls-col">
+              <div class="col-heading font-mono">ENVIRONMENT & MOTION (MQ-45 / ADXL345 / GPS)</div>
+
+              <!-- Ambient Temperature -->
+              <div class="control-row">
+                <div class="control-label-row">
+                  <label for="ctrl-amb-num" class="control-label">Ambient Temperature (°C)</label>
+                  <div class="control-input-stepper">
+                    <button class="btn-step" data-target="ctrl-amb" data-delta="-0.5">-</button>
+                    <input type="number" id="ctrl-amb-num" step="0.5" min="15.0" max="52.0" value="28.0" class="font-mono">
+                    <button class="btn-step" data-target="ctrl-amb" data-delta="0.5">+</button>
                   </div>
                 </div>
-                <input type="range" id="sim-amb-temp" class="dial-range" step="0.5" min="15.0" max="52.0" value="28.0">
+                <input type="range" id="ctrl-amb" step="0.5" min="15.0" max="52.0" value="28.0" class="slider-control">
               </div>
 
               <!-- Humidity -->
-              <div class="dial-row">
-                <div class="dial-label-row">
-                  <span class="dial-label">Ambient Humidity (%)</span>
-                  <div class="dial-stepper-box">
-                    <button class="btn-step font-mono" data-target="sim-humidity" data-delta="-1">-</button>
-                    <input type="number" id="sim-humidity-num" min="10" max="100" value="60" class="font-mono">
-                    <button class="btn-step font-mono" data-target="sim-humidity" data-delta="1">+</button>
+              <div class="control-row">
+                <div class="control-label-row">
+                  <label for="ctrl-hum-num" class="control-label">Ambient Humidity (%)</label>
+                  <div class="control-input-stepper">
+                    <button class="btn-step" data-target="ctrl-hum" data-delta="-1">-</button>
+                    <input type="number" id="ctrl-hum-num" min="10" max="100" value="60" class="font-mono">
+                    <button class="btn-step" data-target="ctrl-hum" data-delta="1">+</button>
                   </div>
                 </div>
-                <input type="range" id="sim-humidity" class="dial-range" min="10" max="100" value="60">
+                <input type="range" id="ctrl-hum" min="10" max="100" value="60" class="slider-control">
               </div>
 
-              <!-- MQ-45 -->
-              <div class="dial-row">
-                <div class="dial-label-row">
-                  <span class="dial-label">MQ-45 Gas Exposure</span>
-                  <div class="dial-stepper-box">
-                    <button class="btn-step font-mono" data-target="sim-mq45" data-delta="-10">-</button>
-                    <input type="number" id="sim-mq45-num" min="50" max="1000" value="180" class="font-mono">
-                    <button class="btn-step font-mono" data-target="sim-mq45" data-delta="10">+</button>
+              <!-- MQ-45 Environmental Exposure -->
+              <div class="control-row">
+                <div class="control-label-row">
+                  <label for="ctrl-mq-num" class="control-label">MQ-45 Environmental Exposure Indicator</label>
+                  <div class="control-input-stepper">
+                    <button class="btn-step" data-target="ctrl-mq" data-delta="-10">-</button>
+                    <input type="number" id="ctrl-mq-num" min="50" max="1000" value="180" class="font-mono">
+                    <button class="btn-step" data-target="ctrl-mq" data-delta="10">+</button>
                   </div>
                 </div>
-                <input type="range" id="sim-mq45" class="dial-range" min="50" max="1000" value="180">
+                <input type="range" id="ctrl-mq" min="50" max="1000" value="180" class="slider-control">
               </div>
 
-              <!-- 3-Axis ADXL345 Motion -->
-              <div class="dial-row">
-                <div class="dial-label-row">
-                  <span class="dial-label">ADXL345 Acceleration</span>
-                  <span class="status-chip chip-rest font-mono" id="val-activity-badge">REST</span>
+              <!-- ADXL345 Acceleration Vectors -->
+              <div class="control-row">
+                <div class="control-label-row">
+                  <span class="control-label">ADXL345 Acceleration (g)</span>
+                  <span class="font-mono" id="ctrl-accel-mag-label">Mag: 0.98g</span>
                 </div>
-                <div class="axis-steppers-grid">
-                  <div class="axis-input-item">
-                    <span class="axis-prefix font-mono">X</span>
-                    <input type="number" id="sim-ax-num" step="0.05" min="-3.0" max="3.0" value="0.02" class="font-mono">
-                    <input type="range" id="sim-ax" class="dial-range micro-range" step="0.05" min="-3.0" max="3.0" value="0.02">
+                <div class="accel-inputs-grid font-mono">
+                  <div class="axis-cell">
+                    <span>X:</span>
+                    <input type="number" id="ctrl-ax" step="0.05" min="-3.0" max="3.0" value="0.02">
                   </div>
-                  <div class="axis-input-item">
-                    <span class="axis-prefix font-mono">Y</span>
-                    <input type="number" id="sim-ay-num" step="0.05" min="-3.0" max="3.0" value="0.01" class="font-mono">
-                    <input type="range" id="sim-ay" class="dial-range micro-range" step="0.05" min="-3.0" max="3.0" value="0.01">
+                  <div class="axis-cell">
+                    <span>Y:</span>
+                    <input type="number" id="ctrl-ay" step="0.05" min="-3.0" max="3.0" value="0.01">
                   </div>
-                  <div class="axis-input-item">
-                    <span class="axis-prefix font-mono">Z</span>
-                    <input type="number" id="sim-az-num" step="0.05" min="-3.0" max="3.0" value="0.98" class="font-mono">
-                    <input type="range" id="sim-az" class="dial-range micro-range" step="0.05" min="-3.0" max="3.0" value="0.98">
+                  <div class="axis-cell">
+                    <span>Z:</span>
+                    <input type="number" id="ctrl-az" step="0.05" min="-3.0" max="3.0" value="0.98">
                   </div>
-                </div>
-                <div class="axis-readout-line font-mono">
-                  <span>MAG: <strong id="val-accel-mag">0.98g</strong></span>
-                  <span id="val-accel-x" style="display:none;">+0.02g</span>
-                  <span id="val-accel-y" style="display:none;">+0.01g</span>
-                  <span id="val-accel-z" style="display:none;">+0.98g</span>
                 </div>
               </div>
 
               <!-- GPS Coordinates -->
-              <div class="dial-row gps-row">
-                <span class="dial-label">Wearable GPS Node</span>
-                <div class="gps-inputs">
-                  <input type="number" id="sim-lat" step="0.001" value="10.662" title="Latitude" class="font-mono">
-                  <input type="number" id="sim-lon" step="0.001" value="76.891" title="Longitude" class="font-mono">
+              <div class="control-row">
+                <div class="control-label-row">
+                  <span class="control-label">Wearable GPS Node</span>
+                  <span class="font-mono text-muted">Emergency Location</span>
+                </div>
+                <div class="accel-inputs-grid font-mono">
+                  <div class="axis-cell">
+                    <span>LAT:</span>
+                    <input type="number" id="ctrl-lat" step="0.001" value="10.662">
+                  </div>
+                  <div class="axis-cell">
+                    <span>LON:</span>
+                    <input type="number" id="ctrl-lon" step="0.001" value="76.891">
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- 2-Column Split: SECTION 3 (Live ML Result) & SECTION 4 (Why did model change?) -->
+        <div class="overview-dual-grid">
+
+          <!-- SECTION 3: Live ML Result -->
+          <div class="section-card">
+            <div class="card-header">
+              <h3>MODEL OUTPUT</h3>
+              <span class="header-note font-mono">Direct backend inference</span>
+            </div>
+            
+            <div class="ml-result-banner">
+              <div>
+                <span class="res-eyebrow font-mono">OVERALL HEALTH RISK</span>
+                <div class="res-level-row">
+                  <span class="status-badge-lg badge-normal" id="lab-overall-badge">NORMAL</span>
+                  <div class="hero-score-box">
+                    <span class="score-caption font-mono">SCORE</span>
+                    <span class="score-number font-mono" id="lab-overall-score">0.10</span>
+                  </div>
+                </div>
+              </div>
+              <div class="res-trend-box font-mono">
+                <span class="trend-caption">TREND</span>
+                <span class="trend-value" id="lab-overall-trend">→ Stable</span>
+              </div>
+            </div>
+
+            <div class="table-container">
+              <table class="risk-matrix-table">
+                <thead>
+                  <tr>
+                    <th>MODEL</th>
+                    <th>SCORE</th>
+                    <th>LEVEL</th>
+                  </tr>
+                </thead>
+                <tbody id="lab-models-tbody">
+                  <tr>
+                    <td>General Anomaly</td>
+                    <td class="font-mono" id="lab-m-gen-score">0.12</td>
+                    <td><span class="status-chip chip-normal font-mono" id="lab-m-gen-badge">LOW</span></td>
+                  </tr>
+                  <tr>
+                    <td>Respiratory Risk</td>
+                    <td class="font-mono" id="lab-m-resp-score">0.08</td>
+                    <td><span class="status-chip chip-normal font-mono" id="lab-m-resp-badge">LOW</span></td>
+                  </tr>
+                  <tr>
+                    <td>Oxygenation Risk</td>
+                    <td class="font-mono" id="lab-m-oxy-score">0.08</td>
+                    <td><span class="status-chip chip-normal font-mono" id="lab-m-oxy-badge">LOW</span></td>
+                  </tr>
+                  <tr>
+                    <td>Heat Stress</td>
+                    <td class="font-mono" id="lab-m-heat-score">0.10</td>
+                    <td><span class="status-chip chip-normal font-mono" id="lab-m-heat-badge">LOW</span></td>
+                  </tr>
+                  <tr>
+                    <td>Fatigue</td>
+                    <td class="font-mono" id="lab-m-fatigue-score">0.10</td>
+                    <td><span class="status-chip chip-normal font-mono" id="lab-m-fatigue-badge">LOW</span></td>
+                  </tr>
+                  <tr>
+                    <td>Environment</td>
+                    <td class="font-mono" id="lab-m-env-score">0.10</td>
+                    <td><span class="status-chip chip-normal font-mono" id="lab-m-env-badge">LOW</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- SECTION 4: WHY DID THE MODEL CHANGE? -->
+          <div class="section-card">
+            <div class="card-header">
+              <h3>WHY DID THE MODEL CHANGE?</h3>
+              <span class="header-note font-mono">Contributing Model Features</span>
+            </div>
+            <div class="why-explanations-list" id="lab-why-list">
+              <div class="why-item font-mono">
+                <span class="why-impact">+0.00</span>
+                <div class="why-content">
+                  <strong>All parameters within personal baseline</strong>
+                  <span class="why-detail">Nominal physiological balance</span>
                 </div>
               </div>
             </div>
           </div>
-        </section>
 
-        <!-- 6. Real-Time Test Mode: Pipeline Traceability Inspector -->
-        <section class="panel inspector-panel">
-          <div class="panel-header">
-            <div class="panel-header-left">
-              <span class="section-tag section-tag-amber">05 // TRACEABILITY</span>
-              <h2>REAL-TIME PIPELINE TRACE</h2>
+        </div>
+
+        <!-- 2-Column Split: SECTION 5 (Personal Baseline) & SECTION 6 & 7 (Alert Test & Recovery) -->
+        <div class="overview-dual-grid">
+
+          <!-- SECTION 5: Personal Baseline -->
+          <div class="section-card">
+            <div class="card-header">
+              <h3>PERSONAL BASELINE COMPARISON</h3>
+              <span class="header-note font-mono">Personalized deviation detection</span>
+            </div>
+            <div class="table-container">
+              <table class="risk-matrix-table font-mono">
+                <thead>
+                  <tr>
+                    <th>PARAMETER</th>
+                    <th>BASELINE</th>
+                    <th>CURRENT</th>
+                    <th>DEVIATION</th>
+                  </tr>
+                </thead>
+                <tbody id="lab-baseline-tbody">
+                  <tr>
+                    <td>Heart Rate</td>
+                    <td id="lb-base-hr">72.0 BPM</td>
+                    <td id="lb-curr-hr">74 BPM</td>
+                    <td id="lb-dev-hr">+2.8%</td>
+                  </tr>
+                  <tr>
+                    <td>SpO2</td>
+                    <td id="lb-base-spo2">98.0%</td>
+                    <td id="lb-curr-spo2">98%</td>
+                    <td id="lb-dev-spo2">0.0%</td>
+                  </tr>
+                  <tr>
+                    <td>Body Temp</td>
+                    <td id="lb-base-temp">36.7°C</td>
+                    <td id="lb-curr-temp">36.7°C</td>
+                    <td id="lb-dev-temp">0.0°C</td>
+                  </tr>
+                  <tr>
+                    <td>Ambient Temp</td>
+                    <td id="lb-base-amb">28.0°C</td>
+                    <td id="lb-curr-amb">28.0°C</td>
+                    <td id="lb-dev-amb">0.0°C</td>
+                  </tr>
+                  <tr>
+                    <td>Humidity</td>
+                    <td id="lb-base-hum">60.0%</td>
+                    <td id="lb-curr-hum">60%</td>
+                    <td id="lb-dev-hum">0.0%</td>
+                  </tr>
+                  <tr>
+                    <td>MQ-45 Exposure</td>
+                    <td id="lb-base-mq">180.0</td>
+                    <td id="lb-curr-mq">180</td>
+                    <td id="lb-dev-mq">+0</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
 
-          <div class="inspector-chain">
-            <!-- Step 1 -->
-            <div class="chain-node">
-              <div class="node-marker font-mono">01</div>
-              <div class="node-body">
-                <span class="node-title">RAW TELEMETRY INPUT</span>
-                <div class="node-code-box" id="pipe-input-box">
-                  <code class="font-mono">HR: 75 BPM, SpO2: 98%<br>Temp: 36.8°C, Amb: 28.0°C<br>MQ-45: 180, Act: REST</code>
-                </div>
-              </div>
+          <!-- SECTION 6 & 7: Alert Test & Smooth Recovery -->
+          <div class="section-card">
+            <div class="card-header">
+              <h3>ALERT TESTING & RECOVERY CONTROLS</h3>
             </div>
-
-            <!-- Step 2 -->
-            <div class="chain-node">
-              <div class="node-marker font-mono">02</div>
-              <div class="node-body">
-                <span class="node-title">EXTRACTED BASELINE DEVIATIONS</span>
-                <div class="node-code-box" id="pipe-features-box">
-                  <code class="font-mono">SpO2 dev: +0.00% (Z: 0)<br>HR dev: +4.1% (Z: 0.2)<br>Temp dev: +0.10°C</code>
-                </div>
+            <div class="alert-test-controls-body">
+              <div class="test-state-row">
+                <span class="control-label">CURRENT ALERT STATE:</span>
+                <span class="status-chip chip-normal font-mono" id="lab-alert-state-chip">NORMAL</span>
               </div>
-            </div>
+              <p class="test-desc">
+                Exercise early-warning escalation step-by-step or trigger natural gradual recovery back to baseline norms.
+              </p>
 
-            <!-- Step 3 -->
-            <div class="chain-node">
-              <div class="node-marker font-mono">03</div>
-              <div class="node-body">
-                <span class="node-title">ML MODEL INFERENCE SUITE</span>
-                <div class="node-code-box" id="pipe-models-box">
-                  <code class="font-mono">Resp: 0.08 (LOW)<br>Heat: 0.10 (LOW)<br>Gen: 0.12 (LOW)</code>
-                </div>
+              <div class="action-buttons-stack">
+                <button id="btn-trigger-next-level" class="btn-action-primary">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>
+                  TRIGGER NEXT RISK LEVEL
+                </button>
+                <button id="btn-return-baseline" class="btn-action-secondary">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                  RETURN TO BASELINE (GRADUAL DECAY)
+                </button>
               </div>
-            </div>
 
-            <!-- Step 4 -->
-            <div class="chain-node">
-              <div class="node-marker font-mono">04</div>
-              <div class="node-body">
-                <span class="node-title">TREND PERSISTENCE ESCALATION</span>
-                <div class="node-code-box" id="pipe-escalation-box">
-                  <code class="font-mono">Escalated: LOW<br>Persistence: 0/5 samples</code>
-                </div>
-              </div>
-            </div>
-
-            <!-- Step 5 -->
-            <div class="chain-node">
-              <div class="node-marker font-mono">05</div>
-              <div class="node-body">
-                <span class="node-title">CARETAKER ALERT ENGINE</span>
-                <div class="node-code-box" id="pipe-alert-box">
-                  <code class="font-mono">Status: Standby<br>No escalation triggers</code>
-                </div>
+              <div class="stepper-log font-mono" id="lab-action-log">
+                Ready. Click "TRIGGER NEXT RISK LEVEL" to simulate gradual deterioration.
               </div>
             </div>
           </div>
-        </section>
 
-        <!-- 7. Caretaker Notification History Audit Stream -->
-        <section class="panel audit-panel">
-          <div class="panel-header">
-            <div class="panel-header-left">
-              <span class="section-tag">06 // AUDIT</span>
-              <h2>CARETAKER NOTIFICATION LOG</h2>
+        </div>
+
+      </section>
+
+      <!-- =================================================================== -->
+      <!-- VIEW 4: ALERTS (Caretaker History & Management)                     -->
+      <!-- =================================================================== -->
+      <section id="view-alerts" class="view-panel">
+        
+        <div class="section-card">
+          <div class="card-header alerts-header-flex">
+            <div>
+              <h3>CARETAKER NOTIFICATION HISTORY</h3>
+              <span class="header-note font-mono">Historical log of all generated early-warning and critical caretaker notifications</span>
             </div>
-            <button id="btn-refresh-alerts" class="btn-hairline-sm">Refresh</button>
+            
+            <!-- Alert Filters -->
+            <div class="alert-filters font-mono">
+              <button class="filter-btn active" data-filter="ALL">ALL (<span id="count-all">0</span>)</button>
+              <button class="filter-btn" data-filter="ACTIVE">ACTIVE (<span id="count-active">0</span>)</button>
+              <button class="filter-btn" data-filter="ACKNOWLEDGED">ACKNOWLEDGED (<span id="count-acked">0</span>)</button>
+              <button class="filter-btn" data-filter="CRITICAL">CRITICAL (<span id="count-crit">0</span>)</button>
+            </div>
           </div>
 
-          <div class="audit-stream-wrap">
-            <table class="audit-table">
+          <div class="table-container">
+            <table class="alerts-history-table">
               <thead>
                 <tr>
-                  <th>ID</th>
                   <th>TIME</th>
                   <th>LEVEL</th>
                   <th>TYPE</th>
+                  <th>MESSAGE</th>
+                  <th>LOCATION</th>
                   <th>STATUS</th>
                   <th>ACTION</th>
                 </tr>
               </thead>
-              <tbody id="alert-history-tbody">
+              <tbody id="alerts-table-body">
                 <tr>
-                  <td colspan="6" class="empty-cell font-mono">No caretaker alerts recorded yet.</td>
+                  <td colspan="7" class="empty-cell font-mono">No caretaker alerts recorded yet.</td>
                 </tr>
               </tbody>
             </table>
           </div>
-        </section>
-
-      </aside>
-    </main>
-
-    <!-- Dedicated Test Panel & Pipeline Traceability View -->
-    <section id="view-pipeline" class="pipeline-fullscreen-view hidden">
-      <div class="pipeline-view-header">
-        <div class="pv-header-left">
-          <span class="section-tag section-tag-cyan">04 // PIPELINE ARCHITECTURE</span>
-          <h2>EDGE-AI PIPELINE TRACEABILITY & VERIFICATION STAGE</h2>
-          <p class="pv-sub">Complete live audit showing every telemetry transformation: Input &rarr; Features &rarr; Baseline Deviations &rarr; ML Inference &rarr; Risk Escalation &rarr; Caretaker Alert.</p>
-        </div>
-        <div class="pv-header-right">
-          <span class="stat-pill font-mono" id="pv-status-chip">Processing Node: RPi 4 / Edge Active</span>
-        </div>
-      </div>
-
-      <!-- Quick Preset Injector inside Test Panel -->
-      <div class="pv-presets-bar">
-        <span class="pv-bar-label font-mono">SCENARIO INJECTION:</span>
-        <div class="pv-chips-row">
-          <button class="chip-btn preset-chip-btn" data-preset="normal">1. Normal Healthy</button>
-          <button class="chip-btn preset-chip-btn" data-preset="early_respiratory">2. Early Respiratory</button>
-          <button class="chip-btn preset-chip-btn" data-preset="elevated_respiratory">3. Elevated Respiratory</button>
-          <button class="chip-btn preset-chip-btn" data-preset="high_environmental">4. High Environmental</button>
-          <button class="chip-btn preset-chip-btn" data-preset="heat_stress">5. Heat-Stress</button>
-          <button class="chip-btn preset-chip-btn" data-preset="fatigue">6. Fatigue</button>
-          <button class="chip-btn preset-chip-btn" data-preset="recovery">7. Recovery</button>
-          <button class="chip-btn preset-chip-btn" data-preset="critical_multiparameter">8. Multi-Parameter Critical</button>
-        </div>
-      </div>
-
-      <!-- 6-Stage Visual Flow Grid -->
-      <div class="pipeline-stage-grid">
-        <!-- Stage 1 -->
-        <div class="stage-card">
-          <div class="stage-header">
-            <span class="stage-number font-mono">STAGE 01</span>
-            <h3>INPUT TELEMETRY</h3>
-          </div>
-          <div class="stage-body" id="pv-stage-input">
-            <div class="stage-metric-row"><span>Heart Rate:</span><strong id="pvs-hr">75 BPM</strong></div>
-            <div class="stage-metric-row"><span>SpO2 Oxygen:</span><strong id="pvs-spo2">98%</strong></div>
-            <div class="stage-metric-row"><span>PPG Quality:</span><strong id="pvs-ppg">0.95</strong></div>
-            <div class="stage-metric-row"><span>Core Temp:</span><strong id="pvs-bt">36.8°C</strong></div>
-            <div class="stage-metric-row"><span>Ambient Temp:</span><strong id="pvs-at">28.0°C</strong></div>
-            <div class="stage-metric-row"><span>Humidity:</span><strong id="pvs-hum">60%</strong></div>
-            <div class="stage-metric-row"><span>MQ-45 Exposure:</span><strong id="pvs-mq">180</strong></div>
-            <div class="stage-metric-row"><span>ADXL345 (X,Y,Z):</span><strong id="pvs-accel">+0.02, +0.01, +0.98</strong></div>
-            <div class="stage-metric-row"><span>GPS (Lat, Lon):</span><strong id="pvs-gps">10.662, 76.891</strong></div>
-          </div>
         </div>
 
-        <!-- Stage Arrow -->
-        <div class="stage-arrow font-mono">&rarr;</div>
+      </section>
 
-        <!-- Stage 2 -->
-        <div class="stage-card">
-          <div class="stage-header">
-            <span class="stage-number font-mono">STAGE 02</span>
-            <h3>FEATURE ENGINEERING</h3>
+      <!-- =================================================================== -->
+      <!-- VIEW 5: DEVICE (Hardware Debugging & Connectivity)                  -->
+      <!-- =================================================================== -->
+      <section id="view-device" class="view-panel">
+        
+        <!-- Hardware Nodes Card -->
+        <div class="section-card">
+          <div class="card-header">
+            <h3>HARDWARE SYSTEM CONNECTIVITY</h3>
+            <span class="header-note font-mono">Raspberry Pi 4 Edge Node & ESP32 Acquisition Diagnostics</span>
           </div>
-          <div class="stage-body" id="pv-stage-features">
-            <div class="stage-metric-row"><span>Acc Magnitude:</span><strong id="pvs-mag">0.98g</strong></div>
-            <div class="stage-metric-row"><span>Activity Level:</span><strong id="pvs-act">REST</strong></div>
-            <div class="stage-metric-row"><span>Heat Index:</span><strong id="pvs-hi">29.5°C</strong></div>
-            <div class="stage-metric-row"><span>HR Trend:</span><strong id="pvs-hr-trend">+0.00 BPM/s</strong></div>
-            <div class="stage-metric-row"><span>SpO2 Trend:</span><strong id="pvs-spo2-trend">0.00%/s</strong></div>
-            <div class="stage-metric-row"><span>Temp Trend:</span><strong id="pvs-temp-trend">+0.00°C/s</strong></div>
-            <div class="stage-metric-row"><span>Signal Quality:</span><strong id="pvs-sigq">0.95</strong></div>
-            <div class="stage-metric-row"><span>Fall Candidate:</span><strong id="pvs-fall">NO</strong></div>
-          </div>
-        </div>
 
-        <!-- Stage Arrow -->
-        <div class="stage-arrow font-mono">&rarr;</div>
+          <div class="device-diagnostics-grid font-mono">
+            <div class="diag-card">
+              <div class="diag-header">
+                <span class="diag-title">ESP32 SENSOR NODE</span>
+                <span class="diag-badge badge-green" id="dev-esp32-badge">ONLINE</span>
+              </div>
+              <div class="diag-body">
+                <div class="diag-row"><span>Node ID:</span><strong>ESP32-001</strong></div>
+                <div class="diag-row"><span>Hardware:</span><strong>ESP32-WROOM-32</strong></div>
+                <div class="diag-row"><span>Firmware:</span><strong>v1.0.0</strong></div>
+                <div class="diag-row"><span>Packets Received:</span><strong id="dev-packets-count">0</strong></div>
+                <div class="diag-row"><span>Last Telemetry:</span><strong id="dev-last-telemetry">Live</strong></div>
+              </div>
+            </div>
 
-        <!-- Stage 3 -->
-        <div class="stage-card">
-          <div class="stage-header">
-            <span class="stage-number font-mono">STAGE 03</span>
-            <h3>BASELINE DEVIATIONS</h3>
-          </div>
-          <div class="stage-body" id="pv-stage-baseline">
-            <div class="stage-metric-row"><span>HR Rel Dev:</span><strong id="pvs-hr-dev">+0.0%</strong></div>
-            <div class="stage-metric-row"><span>HR Z-Score:</span><strong id="pvs-hr-z">0.0</strong></div>
-            <div class="stage-metric-row"><span>SpO2 Rel Dev:</span><strong id="pvs-spo2-dev">0.0%</strong></div>
-            <div class="stage-metric-row"><span>SpO2 Z-Score:</span><strong id="pvs-spo2-z">0.0</strong></div>
-            <div class="stage-metric-row"><span>Temp Diff:</span><strong id="pvs-temp-dev">+0.0°C</strong></div>
-            <div class="stage-metric-row"><span>Temp Z-Score:</span><strong id="pvs-temp-z">0.0</strong></div>
-            <div class="stage-metric-row"><span>MQ-45 Z-Score:</span><strong id="pvs-mq-z">0.0</strong></div>
-            <div class="stage-metric-row"><span>Rolling Baseline:</span><strong id="pvs-base-summary">Normal</strong></div>
-          </div>
-        </div>
-
-        <!-- Stage Arrow -->
-        <div class="stage-arrow font-mono">&rarr;</div>
-
-        <!-- Stage 4 -->
-        <div class="stage-card">
-          <div class="stage-header">
-            <span class="stage-number font-mono">STAGE 04</span>
-            <h3>ML MODEL ENSEMBLE</h3>
-          </div>
-          <div class="stage-body" id="pv-stage-ml">
-            <div class="stage-metric-row"><span>Respiratory:</span><strong id="pvs-ml-resp">0.08 (LOW)</strong></div>
-            <div class="stage-metric-row"><span>Oxygenation:</span><strong id="pvs-ml-oxy">0.08 (LOW)</strong></div>
-            <div class="stage-metric-row"><span>Heat-Stress:</span><strong id="pvs-ml-heat">0.10 (LOW)</strong></div>
-            <div class="stage-metric-row"><span>Fatigue-Strain:</span><strong id="pvs-ml-fatigue">0.10 (LOW)</strong></div>
-            <div class="stage-metric-row"><span>Environmental:</span><strong id="pvs-ml-env">0.10 (LOW)</strong></div>
-            <div class="stage-metric-row"><span>General Anomaly:</span><strong id="pvs-ml-gen">0.12 (LOW)</strong></div>
-            <div class="stage-metric-row"><span>Overall Score:</span><strong id="pvs-ml-overall">0.10 (LOW)</strong></div>
-            <div class="stage-metric-row"><span>Model Version:</span><strong id="pvs-ml-ver">1.0.0-edge</strong></div>
-          </div>
-        </div>
-
-        <!-- Stage Arrow -->
-        <div class="stage-arrow font-mono">&rarr;</div>
-
-        <!-- Stage 5 -->
-        <div class="stage-card">
-          <div class="stage-header">
-            <span class="stage-number font-mono">STAGE 05</span>
-            <h3>RISK FUSION & ESCALATION</h3>
-          </div>
-          <div class="stage-body" id="pv-stage-escalation">
-            <div class="stage-metric-row"><span>Escalated Level:</span><strong id="pvs-esc-level">LOW</strong></div>
-            <div class="stage-metric-row"><span>Persistence:</span><strong id="pvs-esc-persist">0 / 5 samples</strong></div>
-            <div class="stage-metric-row"><span>Deviating Indicators:</span><strong id="pvs-esc-devcount">0 parameters</strong></div>
-            <div class="stage-reasons-box">
-              <span class="box-caption">ESCALATION REASONING:</span>
-              <ul id="pvs-esc-reasons">
-                <li>All parameters tracking nominal personal baseline.</li>
-              </ul>
+            <div class="diag-card">
+              <div class="diag-header">
+                <span class="diag-title">EDGE AI HOST</span>
+                <span class="diag-badge badge-green">ONLINE</span>
+              </div>
+              <div class="diag-body">
+                <div class="diag-row"><span>Host Model:</span><strong>Raspberry Pi 4 Model B</strong></div>
+                <div class="diag-row"><span>Architecture:</span><strong>ARM64 / Linux</strong></div>
+                <div class="diag-row"><span>Backend Engine:</span><strong>FastAPI + Uvicorn</strong></div>
+                <div class="diag-row"><span>ML Suite:</span><strong>XGBoost + Scikit-Learn</strong></div>
+                <div class="diag-row"><span>Database:</span><strong id="dev-db-type">MongoDB Live</strong></div>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Stage Arrow -->
-        <div class="stage-arrow font-mono">&rarr;</div>
-
-        <!-- Stage 6 -->
-        <div class="stage-card">
-          <div class="stage-header">
-            <span class="stage-number font-mono">STAGE 06</span>
-            <h3>CARETAKER ALERT ENGINE</h3>
+        <!-- Individual Sensor Checklist -->
+        <div class="section-card">
+          <div class="card-header">
+            <h3>ONBOARD SENSOR SUBSYSTEMS</h3>
+            <span class="header-note font-mono">Active sensor stream health</span>
           </div>
-          <div class="stage-body" id="pv-stage-alert">
-            <div class="stage-metric-row"><span>Alert Status:</span><strong id="pvs-alt-status">STANDBY</strong></div>
-            <div class="stage-metric-row"><span>Alert ID:</span><strong id="pvs-alt-id">-</strong></div>
-            <div class="stage-metric-row"><span>Risk Type:</span><strong id="pvs-alt-type">-</strong></div>
-            <div class="stage-metric-row"><span>Message:</span><strong id="pvs-alt-msg">-</strong></div>
-            <div class="stage-metric-row"><span>GPS Coordinate:</span><strong id="pvs-alt-gps">10.662° N, 76.891° E</strong></div>
-            <div class="stage-metric-row"><span>Acknowledged:</span><strong id="pvs-alt-ack">-</strong></div>
+          <div class="sensors-checklist-grid font-mono">
+            <div class="sensor-check-card" id="card-sensor-max">
+              <div class="sc-top">
+                <span class="sc-name">MAX30102</span>
+                <span class="sc-status status-data" id="sc-max-status">DATA</span>
+              </div>
+              <span class="sc-role">Pulse Oximeter & Heart Rate (Red/IR PPG)</span>
+            </div>
+
+            <div class="sensor-check-card" id="card-sensor-adxl">
+              <div class="sc-top">
+                <span class="sc-name">ADXL345</span>
+                <span class="sc-status status-data" id="sc-adxl-status">DATA</span>
+              </div>
+              <span class="sc-role">3-Axis Accelerometer (Activity & Fall Detection)</span>
+            </div>
+
+            <div class="sensor-check-card" id="card-sensor-temp">
+              <div class="sc-top">
+                <span class="sc-name">BODY TEMPERATURE</span>
+                <span class="sc-status status-data" id="sc-temp-status">DATA</span>
+              </div>
+              <span class="sc-role">Core Body Temperature Sensor (°C)</span>
+            </div>
+
+            <div class="sensor-check-card" id="card-sensor-dht">
+              <div class="sc-top">
+                <span class="sc-name">AMBIENT DHT</span>
+                <span class="sc-status status-data" id="sc-dht-status">DATA</span>
+              </div>
+              <span class="sc-role">Ambient Temperature & Humidity Sensor</span>
+            </div>
+
+            <div class="sensor-check-card" id="card-sensor-mq">
+              <div class="sc-top">
+                <span class="sc-name">MQ-45</span>
+                <span class="sc-status status-data" id="sc-mq-status">DATA</span>
+              </div>
+              <span class="sc-role">Environmental Air Exposure Indicator</span>
+            </div>
+
+            <div class="sensor-check-card" id="card-sensor-gps">
+              <div class="sc-top">
+                <span class="sc-name">NEO-6M GPS</span>
+                <span class="sc-status status-data" id="sc-gps-status">FIX</span>
+              </div>
+              <span class="sc-role">Emergency Coordinate Geolocation Node</span>
+            </div>
           </div>
         </div>
-      </div>
-    </section>
 
-    <!-- Terminal Footer (Level 0 Elevation) -->
-    <footer class="terminal-footer">
+      </section>
+
+    </main>
+
+    <!-- App Footer -->
+    <footer class="app-footer font-mono">
       <div class="footer-left">
-        <span class="footer-dot"></span>
-        <span>AAROGYA-SHIELD v1.0.0-edge</span>
-        <span class="f-sep">/</span>
-        <span>FastAPI + XGBoost + Scikit-Learn</span>
-        <span class="f-sep">/</span>
-        <span>PhysioNet BIDMC PPG & Respiration Dataset</span>
+        <span class="footer-indicator"></span>
+        <span>VITALSYNC Edge-AI v1.0.0-edge</span>
+        <span class="f-divider">|</span>
+        <span>PhysioNet Clinical Training Pipeline (BIDMC)</span>
       </div>
       <div class="footer-right">
         <span>Raspberry Pi 4 Model B</span>
-        <span class="f-sep">/</span>
-        <span>Local MongoDB Connection</span>
       </div>
     </footer>
 
   </div>
 
-  <script src="/static/app.js"></script>
+  <script src="/static/app.js?v=2.0.1"></script>
 </body>
 </html>

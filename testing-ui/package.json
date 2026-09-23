@@ -1,0 +1,14 @@
+{
+  "name": "aarogya-shield-testing-ui",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 2134 --host",
+    "build": "vite build",
+    "preview": "vite preview --port 2134"
+  },
+  "devDependencies": {
+    "vite": "^5.4.2"
+  }
+}
