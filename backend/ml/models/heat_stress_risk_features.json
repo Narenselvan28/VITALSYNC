@@ -1,0 +1,10 @@
+[
+  "body_temperature",
+  "ambient_temperature",
+  "humidity",
+  "heat_index",
+  "heart_rate",
+  "temp_deviation",
+  "hr_deviation",
+  "activity_state"
+]

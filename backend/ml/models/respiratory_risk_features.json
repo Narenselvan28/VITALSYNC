@@ -1,0 +1,9 @@
+[
+  "heart_rate",
+  "spo2",
+  "ppg_quality",
+  "hr_deviation",
+  "spo2_deviation",
+  "mq45",
+  "activity_state"
+]

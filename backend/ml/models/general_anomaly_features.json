@@ -1,0 +1,14 @@
+[
+  "heart_rate",
+  "spo2",
+  "ppg_quality",
+  "body_temperature",
+  "ambient_temperature",
+  "humidity",
+  "accel_mag",
+  "mq45",
+  "activity_state",
+  "hr_deviation",
+  "spo2_deviation",
+  "temp_deviation"
+]
