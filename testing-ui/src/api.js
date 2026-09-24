@@ -1,5 +1,5 @@
 /**
- * AAROGYA-SHIELD: Centralized API Client
+ * VITALSYNC: Centralized API Client
  * Interfaces with FastAPI backend on VITE_API_URL.
  * Thin client: No calculations, no fabricated risk.
  */
@@ -116,6 +116,22 @@ export class ApiService {
     return await this._fetch(`/api/alerts/${encodeURIComponent(alertId)}/acknowledge`, {
       method: 'POST',
     });
+  }
+
+  async fetchProfile(deviceId = 'ESP32-001') {
+    return await this._fetch(`/api/profile?device_id=${encodeURIComponent(deviceId)}`);
+  }
+
+  async updateProfile(profileData) {
+    this.lastRequest = profileData;
+    return await this._fetch('/api/profile', {
+      method: 'POST',
+      body: JSON.stringify(profileData),
+    });
+  }
+
+  async fetchThresholds(profileName = 'default') {
+    return await this._fetch(`/api/thresholds?profile_name=${encodeURIComponent(profileName)}`);
   }
 }
 

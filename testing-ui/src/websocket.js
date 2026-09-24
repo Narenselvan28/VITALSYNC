@@ -1,5 +1,5 @@
 /**
- * AAROGYA-SHIELD: Live WebSocket Stream Client
+ * VITALSYNC: Live WebSocket Stream Client
  * Manages resilient bidirectional connection to /ws/live.
  * Supports auto-reconnect and state change notifications.
  */

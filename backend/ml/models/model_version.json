@@ -1,121 +1,81 @@
 {
-  "version": "1.0.0-edge",
-  "trained_at": "2026-09-22T07:36:35.112685Z",
-  "dataset_samples": 25000,
-  "source": "PhysioNet BIDMC PPG & Respiration Dataset (v1.0.0) + Multi-Modal Edge Biosignals",
-  "models": {
+  "version": "2.0.0-contextual",
+  "trained_at": "2026-09-24T06:31:38.910944Z",
+  "architecture": "Tiny TCN + Decoupled XGBoost Domain Risk Heads",
+  "domains": [
+    "heart_rate_anomaly",
+    "oxygenation_anomaly",
+    "respiratory_risk",
+    "heat_stress_risk",
+    "environmental_risk",
+    "activity_strain",
+    "general_anomaly"
+  ],
+  "metrics": {
+    "heart_rate_anomaly": {
+      "domain": "heart_rate_anomaly",
+      "accuracy": 0.9978,
+      "f1_macro": 0.988,
+      "precision": 0.9856,
+      "recall": 0.991,
+      "num_test_samples": 5011,
+      "model_file": "heart_rate_anomaly_model.joblib"
+    },
+    "oxygenation_anomaly": {
+      "domain": "oxygenation_anomaly",
+      "accuracy": 0.9976,
+      "f1_macro": 0.9903,
+      "precision": 0.9941,
+      "recall": 0.9869,
+      "num_test_samples": 5011,
+      "model_file": "oxygenation_anomaly_model.joblib"
+    },
     "respiratory_risk": {
-      "accuracy": 0.9972,
-      "f1_macro": 0.9932383033237828,
-      "precision_macro": 0.9928981539605621,
-      "recall_macro": 0.993594965669504,
-      "confusion_matrix": [
-        [
-          3099,
-          1,
-          0,
-          0
-        ],
-        [
-          2,
-          1062,
-          4,
-          0
-        ],
-        [
-          0,
-          0,
-          334,
-          6
-        ],
-        [
-          0,
-          0,
-          1,
-          491
-        ]
-      ]
+      "domain": "respiratory_risk",
+      "accuracy": 0.9998,
+      "f1_macro": 0.9998,
+      "precision": 0.9996,
+      "recall": 0.9999,
+      "num_test_samples": 5011,
+      "model_file": "respiratory_risk_model.joblib"
     },
     "heat_stress_risk": {
-      "accuracy": 0.9968,
-      "f1_macro": 0.9923469659286024,
-      "precision_macro": 0.9928111464959317,
-      "recall_macro": 0.9918998501065026,
-      "confusion_matrix": [
-        [
-          2825,
-          8,
-          0,
-          0
-        ],
-        [
-          2,
-          1731,
-          0,
-          0
-        ],
-        [
-          0,
-          1,
-          198,
-          3
-        ],
-        [
-          0,
-          0,
-          2,
-          230
-        ]
-      ]
+      "domain": "heat_stress_risk",
+      "accuracy": 0.998,
+      "f1_macro": 0.9499,
+      "precision": 0.9552,
+      "recall": 0.9449,
+      "num_test_samples": 5011,
+      "model_file": "heat_stress_risk_model.joblib"
     },
     "environmental_risk": {
+      "domain": "environmental_risk",
+      "accuracy": 0.9956,
+      "f1_macro": 0.9917,
+      "precision": 0.9905,
+      "recall": 0.9928,
+      "num_test_samples": 5011,
+      "model_file": "environmental_risk_model.joblib"
+    },
+    "activity_strain": {
+      "domain": "activity_strain",
       "accuracy": 1.0,
       "f1_macro": 1.0,
-      "precision_macro": 1.0,
-      "recall_macro": 1.0,
-      "confusion_matrix": [
-        [
-          2637,
-          0,
-          0,
-          0
-        ],
-        [
-          0,
-          1143,
-          0,
-          0
-        ],
-        [
-          0,
-          0,
-          768,
-          0
-        ],
-        [
-          0,
-          0,
-          0,
-          452
-        ]
-      ]
+      "precision": 1.0,
+      "recall": 1.0,
+      "num_test_samples": 5011,
+      "model_file": "activity_strain_model.joblib"
     },
     "general_anomaly": {
-      "accuracy": 0.9964,
-      "f1": 0.9957706766917294,
-      "precision": 0.9981158737635422,
-      "recall": 0.9934364744491326,
-      "confusion_matrix": [
-        [
-          2863,
-          4
-        ],
-        [
-          14,
-          2119
-        ]
-      ]
+      "domain": "general_anomaly",
+      "accuracy": 0.9962,
+      "f1_macro": 0.9917,
+      "precision": 0.9935,
+      "recall": 0.9901,
+      "num_test_samples": 5011,
+      "model_file": "general_anomaly_model.joblib"
     }
   },
-  "framing": "Non-diagnostic early-warning and physiological anomaly screening."
+  "edge_target": "Raspberry Pi 4 / ARM Cortex-A72",
+  "inference_latency_target_ms": "< 5 ms"
 }

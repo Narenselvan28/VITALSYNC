@@ -1,5 +1,5 @@
 """
-AAROGYA-SHIELD: Edge-AI FastAPI Application Entry Point
+VITALSYNC: Edge-AI FastAPI Application Entry Point
 Mounts REST API routes, WebSocket endpoint (/ws/live), static dashboard files,
 and initializes baseline, database, and machine learning components on startup.
 """

@@ -1,5 +1,5 @@
 /**
- * AAROGYA-SHIELD: In-App Automated Test Suite Runner
+ * VITALSYNC: In-App Automated Test Suite Runner
  * Executes the 6 acceptance test scenarios sequentially against the real FastAPI backend.
  * Measures real latency and asserts backend response structures.
  */

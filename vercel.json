@@ -1,0 +1,47 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "node build_all.js",
+  "outputDirectory": "dist",
+  "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/lab",
+      "destination": "/lab/index.html"
+    },
+    {
+      "source": "/lab/",
+      "destination": "/lab/index.html"
+    },
+    {
+      "source": "/lab/(.*)",
+      "destination": "/lab/$1"
+    },
+    {
+      "source": "/((?!lab|assets).*)$",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
+      ]
+    }
+  ]
+}

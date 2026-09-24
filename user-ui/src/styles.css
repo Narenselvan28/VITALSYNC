@@ -1,0 +1,987 @@
+/* =====================================================================
+   AAROGYA-SHIELD: Realistic Light-Mode Smartwatch Health Interface
+   Functional clarity inspired by wearable medical and sports aesthetics
+   (Apple Watch / Garmin / Fitbit).
+   Light warm-white background, charcoal text, subtle borders, compact typography.
+   ===================================================================== */
+
+:root {
+  --bg-workspace: #eef2f6;
+  --bg-watch-body: #ffffff;
+  --bg-watch-card: #f8fafc;
+  --bg-subtle: #f1f5f9;
+  
+  --border-light: #e2e8f0;
+  --border-subtle: #cbd5e1;
+  --border-active: #94a3b8;
+
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --text-subtle: #94a3b8;
+
+  --accent-primary: #2563eb;
+  --accent-blue: #0284c7;
+
+  --color-green: #16a34a;
+  --bg-green: #f0fdf4;
+  --border-green: #bbf7d0;
+
+  --color-amber: #d97706;
+  --bg-amber: #fffbeb;
+  --border-amber: #fde68a;
+
+  --color-red: #dc2626;
+  --bg-red: #fef2f2;
+  --border-red: #fecaca;
+
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-sans);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+body.light-mode-wearable-body {
+  background-color: var(--bg-workspace);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px 16px;
+  color: var(--text-primary);
+  background-image: radial-gradient(circle at 50% 10%, #ffffff 0%, var(--bg-workspace) 100%);
+}
+
+.wearable-workspace {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+/* =====================================================================
+   REALISTIC HARDWARE CASE & BEZEL
+   ===================================================================== */
+.watch-hardware-case {
+  position: relative;
+  width: 370px;
+  height: 480px;
+  background: linear-gradient(145deg, #e2e8f0, #cbd5e1);
+  border-radius: 54px;
+  padding: 12px;
+  box-shadow: 
+    0 25px 50px -12px rgba(15, 23, 42, 0.18),
+    0 0 0 1px rgba(255, 255, 255, 0.6) inset,
+    0 4px 12px rgba(0, 0, 0, 0.08);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Digital Rotating Crown */
+.watch-crown-knob {
+  position: absolute;
+  right: -8px;
+  top: 95px;
+  width: 14px;
+  height: 52px;
+  background: linear-gradient(to right, #cbd5e1, #94a3b8);
+  border-radius: 6px;
+  border-left: 1px solid #64748b;
+  cursor: pointer;
+  box-shadow: 1px 2px 4px rgba(0,0,0,0.15);
+  transition: transform 0.1s;
+}
+
+.watch-crown-knob:active {
+  transform: scaleX(0.85);
+}
+
+/* Side Key Button */
+.watch-side-key {
+  position: absolute;
+  right: -6px;
+  top: 175px;
+  width: 10px;
+  height: 40px;
+  background: linear-gradient(to right, #cbd5e1, #94a3b8);
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 1px 1px 3px rgba(0,0,0,0.12);
+}
+
+.watch-side-key:active {
+  transform: scaleX(0.8);
+}
+
+/* Watch Display Screen */
+.watch-display-bezel {
+  width: 100%;
+  height: 100%;
+  background-color: var(--bg-watch-body);
+  border-radius: 44px;
+  border: 4px solid #0f172a;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 18px;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.06);
+}
+
+/* =====================================================================
+   TOP STATUS ROW (Time, Date, Battery)
+   ===================================================================== */
+.watch-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 6px;
+}
+
+.watch-clock {
+  font-family: var(--font-sans);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.watch-date {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.watch-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.watch-profile-btn {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  padding: 0;
+}
+
+.watch-profile-btn:hover {
+  background: var(--border-light);
+  transform: scale(1.08);
+}
+
+.battery-indicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.bat-text {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+
+.bat-pill {
+  width: 18px;
+  height: 9px;
+  border: 1.5px solid var(--text-secondary);
+  border-radius: 3px;
+  padding: 1px;
+  display: flex;
+  align-items: center;
+}
+
+.bat-fill {
+  height: 100%;
+  background-color: var(--color-green);
+  border-radius: 1px;
+}
+
+/* =====================================================================
+   MONITORING PILL
+   ===================================================================== */
+.status-pill-wrap {
+  margin: 4px 0 6px 0;
+}
+
+.monitoring-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.monitoring-pill.pill-active {
+  background-color: var(--bg-green);
+  border-color: var(--border-green);
+  color: var(--color-green);
+}
+
+.pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--color-green);
+  display: inline-block;
+  animation: gentlePulse 2s infinite ease-in-out;
+}
+
+@keyframes gentlePulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+.seq-tag {
+  font-size: 9px;
+  color: var(--text-subtle);
+  margin-left: 2px;
+  font-family: var(--font-mono);
+}
+
+/* =====================================================================
+   PERSONALIZED MONITORING & BASELINE STATUS BANNER (Section 6 & 15)
+   ===================================================================== */
+.profile-status-bar {
+  background: var(--bg-watch-card);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  padding: 6px 9px;
+  margin-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.psb-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.psb-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.psb-dot.learning {
+  background-color: var(--color-amber);
+  animation: gentlePulse 1.8s infinite ease-in-out;
+}
+
+.psb-dot.active {
+  background-color: var(--color-green);
+}
+
+.psb-title {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.psb-version {
+  font-size: 9px;
+  color: var(--text-muted);
+  background: var(--bg-subtle);
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+
+.psb-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+
+.psb-item {
+  background: #ffffff;
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  padding: 2px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.psb-lbl {
+  font-size: 8px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.psb-val {
+  font-size: 8.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.psb-context-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.psb-context-tags.hidden {
+  display: none;
+}
+
+.psb-ctx-chip {
+  font-size: 8px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  text-transform: uppercase;
+}
+
+/* =====================================================================
+   MAIN VITALS TILES (Section 18)
+   ===================================================================== */
+.watch-content-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+
+.vitals-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.vital-tile {
+  background-color: var(--bg-watch-card);
+  border: 1px solid var(--border-light);
+  border-radius: 14px;
+  padding: 9px 11px;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s ease;
+}
+
+.vital-tile:hover {
+  border-color: var(--border-subtle);
+}
+
+.tile-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 2px;
+}
+
+.tile-icon {
+  font-size: 12px;
+}
+
+.tile-title {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  color: var(--text-muted);
+}
+
+.tile-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.tile-num {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.1;
+  font-family: var(--font-mono);
+}
+
+.tile-num-state {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.tile-unit {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.tile-subtext {
+  font-size: 9.5px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* =====================================================================
+   HEALTH RISK ASSESSMENT BANNER
+   ===================================================================== */
+.risk-card {
+  background-color: var(--bg-watch-card);
+  border: 1px solid var(--border-light);
+  border-radius: 14px;
+  padding: 9px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.risk-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.risk-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.risk-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.4px;
+}
+
+.risk-low {
+  background-color: var(--bg-green);
+  color: var(--color-green);
+  border: 1px solid var(--border-green);
+}
+
+.risk-obs {
+  background-color: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+}
+
+.risk-elevated {
+  background-color: var(--bg-amber);
+  color: var(--color-amber);
+  border: 1px solid var(--border-amber);
+}
+
+.risk-critical {
+  background-color: var(--bg-red);
+  color: var(--color-red);
+  border: 1px solid var(--border-red);
+}
+
+.risk-summary {
+  font-size: 10px;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+
+.risk-decision-sources {
+  font-size: 8.5px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-top: 1px dashed var(--border-light);
+  padding-top: 3px;
+  margin-top: 2px;
+}
+
+.rds-label {
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.risk-profile-notice {
+  font-size: 8px;
+  color: #b45309;
+  background: #fffbeb;
+  border: 1px solid #fef3c7;
+  padding: 3px 6px;
+  border-radius: 6px;
+  margin-top: 2px;
+  line-height: 1.2;
+}
+
+.risk-profile-notice.hidden {
+  display: none;
+}
+
+/* =====================================================================
+   ENVIRONMENT FOOTER STRIP
+   ===================================================================== */
+.environment-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 9.5px;
+  color: var(--text-muted);
+  padding-top: 4px;
+  border-top: 1px solid var(--border-light);
+}
+
+.env-divider {
+  color: var(--border-subtle);
+}
+
+/* =====================================================================
+   HEALTH PROFILE ONBOARDING & SETTINGS MODAL (Section 1, 2, 3, 15)
+   ===================================================================== */
+.watch-profile-modal {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(4px);
+  z-index: 150;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 44px;
+  overflow: hidden;
+}
+
+.watch-profile-modal.hidden {
+  display: none;
+}
+
+.profile-card-modal {
+  background: #ffffff;
+  width: 100%;
+  max-height: 96%;
+  border-radius: 24px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.profile-card-modal::-webkit-scrollbar {
+  width: 4px;
+}
+.profile-card-modal::-webkit-scrollbar-thumb {
+  background: var(--border-subtle);
+  border-radius: 4px;
+}
+
+.profile-modal-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.profile-heading-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.profile-icon-badge {
+  font-size: 16px;
+}
+
+.profile-heading {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.3px;
+}
+
+.profile-subheading {
+  font-size: 9px;
+  color: var(--text-secondary);
+}
+
+.profile-close-btn {
+  background: none;
+  border: none;
+  font-size: 13px;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
+.profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.form-group-title {
+  font-size: 8.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 3px;
+}
+
+.form-group-title .hint-text {
+  font-weight: 400;
+  font-size: 7.5px;
+}
+
+.profile-row-inputs {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 5px;
+}
+
+.input-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.input-col label {
+  font-size: 8px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.input-col input,
+.input-col select {
+  font-size: 10px;
+  padding: 3px 5px;
+  border-radius: 6px;
+  border: 1px solid var(--border-light);
+  background: var(--bg-subtle);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+}
+
+.input-with-unit {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-with-unit input {
+  width: 100%;
+  padding-right: 20px;
+}
+
+.input-with-unit .unit-tag {
+  position: absolute;
+  right: 5px;
+  font-size: 8px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.conditions-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-height: 110px;
+  overflow-y: auto;
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  padding: 4px 6px;
+  background: var(--bg-watch-card);
+}
+
+.conditions-grid::-webkit-scrollbar {
+  width: 3px;
+}
+.conditions-grid::-webkit-scrollbar-thumb {
+  background: var(--border-subtle);
+  border-radius: 3px;
+}
+
+.cond-box {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 9px;
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: 2px 0;
+}
+
+.cond-box input[type="checkbox"] {
+  accent-color: var(--accent-primary);
+  cursor: pointer;
+  width: 12px;
+  height: 12px;
+}
+
+.medication-input-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.medication-input-wrap input {
+  font-size: 9.5px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px solid var(--border-light);
+  background: var(--bg-subtle);
+  color: var(--text-primary);
+}
+
+.privacy-note {
+  font-size: 7.5px;
+  color: var(--text-muted);
+  line-height: 1.2;
+}
+
+.profile-action-bar {
+  margin-top: 4px;
+}
+
+.btn-profile-continue {
+  width: 100%;
+  background: var(--accent-primary);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 10.5px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: background 0.15s;
+}
+
+.btn-profile-continue:hover {
+  background: #1d4ed8;
+}
+
+.medical-safety-tag {
+  font-size: 7px;
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: 3px;
+  line-height: 1.2;
+}
+
+/* =====================================================================
+   ALERT MODAL OVERLAYS (Section 19: Spike, Recovered, Critical)
+   ===================================================================== */
+.watch-alert-modal {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(4px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  z-index: 100;
+  transition: opacity 0.2s ease;
+}
+
+.watch-alert-modal.hidden {
+  display: none;
+}
+
+.alert-box {
+  width: 100%;
+  border-radius: 18px;
+  padding: 18px 16px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  border: 1.5px solid var(--border-light);
+  background-color: #ffffff;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.spike-box {
+  border-color: var(--border-amber);
+  background-color: #ffffff;
+}
+
+.recovered-box {
+  border-color: var(--border-green);
+  background-color: #ffffff;
+}
+
+.critical-box {
+  border-color: var(--border-red);
+  background-color: #ffffff;
+}
+
+.alert-category {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--color-amber);
+  text-transform: uppercase;
+}
+
+.green-cat {
+  color: var(--color-green);
+}
+
+.red-cat {
+  color: var(--color-red);
+}
+
+.alert-huge-val {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.green-val {
+  color: var(--color-green);
+}
+
+.alert-headline {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.alert-subline {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  line-height: 1.3;
+}
+
+.alert-action-btn {
+  margin-top: 6px;
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  border: none;
+  transition: background 0.15s;
+}
+
+.dismiss-btn {
+  background-color: var(--bg-subtle);
+  color: var(--text-primary);
+  border: 1px solid var(--border-light);
+}
+
+.dismiss-btn:hover {
+  background-color: var(--border-light);
+}
+
+.ok-btn {
+  background-color: var(--bg-green);
+  color: var(--color-green);
+  border: 1px solid var(--border-green);
+}
+
+.ok-btn:hover {
+  background-color: var(--border-green);
+}
+
+.critical-action-btn {
+  background-color: var(--color-red);
+  color: #ffffff;
+}
+
+.critical-action-btn:hover {
+  background-color: #b91c1c;
+}
+
+/* =====================================================================
+   COMPANION DESKTOP FOOTER
+   ===================================================================== */
+.companion-sync-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  background-color: #ffffff;
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid var(--border-light);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+}
+
+.sync-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--color-green);
+}
+
+.sync-dot.disconnected {
+  background-color: var(--color-red);
+}
+
+.sync-separator {
+  color: var(--border-subtle);
+}
+
+.lab-link-pill {
+  color: var(--accent-primary);
+  text-decoration: none;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 9px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  font-size: 11px;
+  transition: all 0.15s ease;
+}
+
+.lab-link-pill:hover {
+  background: #dbeafe;
+  color: #1d4ed8;
+  transform: translateY(-1px);
+}

@@ -1,5 +1,5 @@
 """
-AAROGYA-SHIELD: WebSocket Live Stream Manager
+VITALSYNC: WebSocket Live Stream Manager
 Maintains concurrent client WebSocket connections and broadcasts real-time
 telemetry, feature derivations, ML predictions, risk escalations, and alerts.
 """

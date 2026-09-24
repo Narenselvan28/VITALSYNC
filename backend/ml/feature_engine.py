@@ -1,41 +1,49 @@
 """
-AAROGYA-SHIELD: Feature Engineering Engine
-Extracts instantaneous, rolling statistics, rate-of-change, motion derivatives,
-heat indices, and personal baseline deviations for edge-AI inference.
+VITALSYNC: Multimodal Feature Engineering Engine
+Fuses sensor quality validation, NTC thermistor calibration, activity actigraphy,
+GPS & external weather context, personal baseline deviations, and Tiny TCN temporal embeddings.
 """
 
 import math
 import numpy as np
 from typing import Dict, Any, List, Optional, Tuple
 from collections import deque
+
+from backend.core.sensor_quality import get_sensor_quality_engine
+from backend.core.ntc_thermistor import get_ntc_engine
+from backend.core.activity_engine import get_activity_engine
+from backend.core.weather_service import get_weather_engine
 from backend.core.baseline_engine import get_device_baseline
+from backend.ml.tiny_tcn import get_tiny_tcn_engine
 
-ACTIVITY_NAMES = {
-    0: "REST",
-    1: "LIGHT",
-    2: "MODERATE",
-    3: "HIGH",
-    4: "FALL_CANDIDATE",
-}
-
-class DeviceFeatureBuffer:
-    def __init__(self, device_id: str, maxlen: int = 60):
+class DeviceTemporalHistory:
+    def __init__(self, device_id: str, maxlen: int = 30):
         self.device_id = device_id
-        self.maxlen = maxlen
         self.history = deque(maxlen=maxlen)
-        self.recent_spike_countdown = 0
-        self.spike_orientation = None
+        self.tcn_sequence = deque(maxlen=10)
 
-    def add(self, reading: Dict[str, Any]):
-        self.history.append(reading)
+    def add(self, reading: Dict[str, Any], features: Dict[str, Any]):
+        self.history.append({
+            "raw": reading,
+            "features": features,
+        })
+        # Sequence row for Tiny TCN: [HR, SpO2, BodyTemp, AccelMag, MQ45, HR_deviation]
+        row = [
+            float(reading.get("heart_rate", 72.0)) / 100.0,
+            float(reading.get("spo2", 98.0)) / 100.0,
+            float(reading.get("body_temperature", 36.7)) / 40.0,
+            float(features.get("accel_mag", 1.0)),
+            float(reading.get("mq45", 180.0)) / 500.0,
+            float(features.get("hr_deviation", 0.0)),
+        ]
+        self.tcn_sequence.append(row)
 
     def get_rolling_stats(self, key: str, window: int = 10) -> Dict[str, float]:
         if not self.history:
             return {"mean": 0.0, "std": 0.0, "roc": 0.0}
-        recent = [float(r.get(key, 0.0)) for r in list(self.history)[-window:]]
+        recent = [float(h["raw"].get(key, 0.0)) for h in list(self.history)[-window:]]
         mean_val = float(np.mean(recent))
         std_val = float(np.std(recent))
-        # Rate of change: delta between current and oldest in window per sample
         roc = float(recent[-1] - recent[0]) / max(len(recent), 1)
         return {
             "mean": round(mean_val, 2),
@@ -43,119 +51,83 @@ class DeviceFeatureBuffer:
             "roc": round(roc, 3),
         }
 
-    def evaluate_fall_sequence(self, ax: float, ay: float, az: float, mag: float) -> bool:
-        """
-        Deterministic Fall Detection Layer:
-        ADXL345 acceleration vectors:
-        Sudden acceleration spike (>2.4g)
-        + orientation/motion change
-        + subsequent inactivity (<1.15g, low variance)
-        = FALL CANDIDATE
-        """
-        # 1. Detect sudden acceleration spike
-        horizontal_component = math.sqrt(ax**2 + ay**2)
-        if mag > 2.4 or (horizontal_component > 2.0 and abs(az) < 0.4):
-            self.recent_spike_countdown = 4  # Track for next 4 samples
-            self.spike_orientation = (ax, ay, az)
-            return True
+_device_histories: Dict[str, DeviceTemporalHistory] = {}
 
-        # 2. Check if we are in post-spike window with subsequent inactivity and tilt
-        if self.recent_spike_countdown > 0:
-            self.recent_spike_countdown -= 1
-            # Inactivity condition: magnitude returns close to 1g (or below) with low movement
-            if mag < 1.25:
-                # Orientation check: if device is lying tilted (horizontal tilt > 0.4g or az < 0.8g)
-                if horizontal_component > 0.4 or abs(az) < 0.8:
-                    return True
-
-        return False
-
-_buffers: Dict[str, DeviceFeatureBuffer] = {}
-
-def get_device_buffer(device_id: str) -> DeviceFeatureBuffer:
-    if device_id not in _buffers:
-        _buffers[device_id] = DeviceFeatureBuffer(device_id)
-    return _buffers[device_id]
-
-
-def calculate_heat_index(temp_c: float, humidity: float) -> float:
-    """Computes Heat Index approximation in Celsius."""
-    # Simplified Rothfusz equation
-    hi = (
-        -8.78469475556
-        + 1.61139411 * temp_c
-        + 2.33854883889 * humidity
-        - 0.14611605 * temp_c * humidity
-        - 0.012308094 * (temp_c ** 2)
-        - 0.0164248277778 * (humidity ** 2)
-        + 0.002211732 * (temp_c ** 2) * humidity
-        + 0.00072546 * temp_c * (humidity ** 2)
-        - 0.000003582 * (temp_c ** 2) * (humidity ** 2)
-    )
-    return round(float(hi), 2)
-
-
-def classify_activity(
-    accel_x: float,
-    accel_y: float,
-    accel_z: float,
-    buffer: Optional[DeviceFeatureBuffer] = None,
-) -> Tuple[int, str]:
-    """
-    Derives activity state from ADXL345 acceleration vectors:
-    REST / LIGHT / MODERATE / HIGH / FALL_CANDIDATE
-    """
-    mag = math.sqrt(accel_x**2 + accel_y**2 + accel_z**2)
-
-    # 1. Deterministic Fall Candidate Layer
-    if buffer and buffer.evaluate_fall_sequence(accel_x, accel_y, accel_z, mag):
-        return 4, "FALL_CANDIDATE"
-
-    # Standalone instantaneous high impact fallback
-    horizontal_component = math.sqrt(accel_x**2 + accel_y**2)
-    if mag > 2.6 or (horizontal_component > 2.2 and abs(accel_z) < 0.4):
-        return 4, "FALL_CANDIDATE"
-
-    # 2. Activity thresholds based on standard actigraphy (SVM)
-    if mag > 1.65:
-        return 3, "HIGH"
-    elif mag > 1.25:
-        return 2, "MODERATE"
-    elif mag > 1.06:
-        return 1, "LIGHT"
-    else:
-        return 0, "REST"
-
+def get_device_history(device_id: str) -> DeviceTemporalHistory:
+    if device_id not in _device_histories:
+        _device_histories[device_id] = DeviceTemporalHistory(device_id)
+    return _device_histories[device_id]
 
 def process_features(raw_reading: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Transforms raw sensor inputs into a complete feature vector
-    incorporating personal baseline deviations and rolling dynamics.
+    Transforms raw incoming telemetry into an integrated contextual feature vector.
     """
     device_id = raw_reading.get("device_id", "ESP32-001")
-    buffer = get_device_buffer(device_id)
+    history = get_device_history(device_id)
     baseline = get_device_baseline(device_id)
+    quality_engine = get_sensor_quality_engine()
+    ntc_engine = get_ntc_engine()
+    act_engine = get_activity_engine()
+    weather_engine = get_weather_engine()
+    tcn_engine = get_tiny_tcn_engine()
 
-    # Extract instantaneous values
+    # 1. Extract raw inputs
     hr = float(raw_reading.get("heart_rate", 75.0))
     spo2 = float(raw_reading.get("spo2", 98.0))
-    ppg_quality = float(raw_reading.get("ppg_quality", 0.95))
+    ppg_q = float(raw_reading.get("ppg_quality", 0.95))
     body_temp = float(raw_reading.get("body_temperature", 36.8))
     amb_temp = float(raw_reading.get("ambient_temperature", 28.0))
     humidity = float(raw_reading.get("humidity", 60.0))
-    ax = float(raw_reading.get("accel_x", 0.02))
-    ay = float(raw_reading.get("accel_y", 0.01))
-    az = float(raw_reading.get("accel_z", 0.98))
-    mq45 = float(raw_reading.get("mq45", 210.0))
-    lat = float(raw_reading.get("latitude", 10.662))
-    lon = float(raw_reading.get("longitude", 76.891))
+    ax = float(raw_reading.get("accel_x", 0.02)) if raw_reading.get("accel_x") is not None else None
+    ay = float(raw_reading.get("accel_y", 0.01)) if raw_reading.get("accel_y") is not None else None
+    az = float(raw_reading.get("accel_z", 0.98)) if raw_reading.get("accel_z") is not None else None
+    mq45 = float(raw_reading.get("mq45", 180.0))
+    lat = raw_reading.get("latitude")
+    lon = raw_reading.get("longitude")
 
-    # Derived physics features
-    acceleration_magnitude = round(math.sqrt(ax**2 + ay**2 + az**2), 3)
-    act_state_code, act_state_label = classify_activity(ax, ay, az, buffer=buffer)
-    heat_index = calculate_heat_index(amb_temp, humidity)
+    # 2. Sensor Quality Assessment
+    temp_rolling = history.get_rolling_stats("body_temperature", 5)
+    quality_eval = quality_engine.evaluate_all(raw_reading, temp_roc=temp_rolling["roc"])
+    sensor_qualities = quality_eval["qualities"]
+    adxl_available = quality_eval["adxl_available"]
 
-    # Personal baseline deviations
+    # 3. NTC Thermistor & Contact Disturbance Evaluation
+    base_temp = baseline.stats["body_temperature"]["mean"]
+    thermal_eval = ntc_engine.evaluate_thermal_reading(
+        device_id=device_id,
+        current_temp=body_temp,
+        ambient_temp=amb_temp,
+        heart_rate=hr,
+        baseline_temp=base_temp,
+    )
+
+    # 4. Motion & Activity Actigraphy
+    motion_eval = act_engine.process_motion(
+        device_id=device_id,
+        ax=ax,
+        ay=ay,
+        az=az,
+        sensor_valid=adxl_available,
+    )
+    exp_label = raw_reading.get("activity_label")
+    exp_state = raw_reading.get("activity_state")
+    if exp_label:
+        motion_eval["activity_state"] = exp_label
+        motion_eval["is_active"] = exp_label in ("WALKING", "RUNNING", "RUNNING_HIGH_ACTIVITY", "EXERCISE", "ACTIVE")
+        motion_eval["is_rest"] = exp_label in ("REST", "SITTING")
+    elif exp_state is not None:
+        try:
+            s_int = int(exp_state)
+            motion_eval["activity_code"] = s_int
+            motion_eval["is_active"] = s_int in (3, 4)
+            motion_eval["is_rest"] = s_int in (0, 1)
+        except Exception:
+            pass
+
+    # 5. External Weather Context (Offline-first)
+    weather_context = weather_engine.get_context(lat, lon)
+
+    # 6. Personal Baseline Deviations
     deviations = baseline.compute_deviations({
         "heart_rate": hr,
         "spo2": spo2,
@@ -163,60 +135,83 @@ def process_features(raw_reading: Dict[str, Any]) -> Dict[str, Any]:
         "ambient_temperature": amb_temp,
         "humidity": humidity,
         "mq45": mq45,
-        "activity_state": act_state_code,
+        "activity_state": motion_eval["activity_code"],
     })
 
-    # Rolling window stats
-    buffer.add(raw_reading)
-    hr_rolling = buffer.get_rolling_stats("heart_rate", 10)
-    spo2_rolling = buffer.get_rolling_stats("spo2", 10)
-    temp_rolling = buffer.get_rolling_stats("body_temperature", 10)
+    # Rolling window dynamics
+    hr_rolling = history.get_rolling_stats("heart_rate", 10)
+    spo2_rolling = history.get_rolling_stats("spo2", 10)
 
     # Relative deviations
     hr_dev = deviations["heart_rate"]["relative_deviation"]
     spo2_dev = deviations["spo2"]["relative_deviation"]
     temp_dev = deviations["body_temperature"]["difference"]
 
+    # Heat index calculation
+    heat_index = amb_temp + 0.1 * humidity
+
     feature_dict = {
         "device_id": device_id,
         "timestamp": raw_reading.get("timestamp"),
+        # Core Physiological
         "heart_rate": hr,
         "spo2": spo2,
-        "ppg_quality": ppg_quality,
-        "signal_quality": ppg_quality,
+        "ppg_quality": ppg_q,
+        "signal_quality": ppg_q,
         "body_temperature": body_temp,
+        "skin_contact_temperature": thermal_eval["skin_contact_temp"],
+        "estimated_core_temperature": thermal_eval["estimated_core_temp"],
+        "is_transient_thermal": thermal_eval["is_transient_disturbance"],
+        "thermal_message": thermal_eval["message"],
+        # Environmental
         "ambient_temperature": amb_temp,
         "humidity": humidity,
-        "heat_index": heat_index,
-        "accel_x": ax,
-        "accel_y": ay,
-        "accel_z": az,
-        "acceleration_magnitude": acceleration_magnitude,
-        "accel_mag": acceleration_magnitude,
+        "heat_index": round(heat_index, 2),
         "mq45": mq45,
         "latitude": lat,
         "longitude": lon,
-        "activity_state": act_state_code,
-        "activity_level": act_state_label,
-        "activity_label": act_state_label,
-        "is_fall_candidate": act_state_code == 4,
-        "fall_candidate": act_state_code == 4,
+        "weather_context": weather_context,
+        # Motion Dynamics
+        "accel_x": ax,
+        "accel_y": ay,
+        "accel_z": az,
+        "acceleration_magnitude": motion_eval["magnitude"],
+        "accel_mag": motion_eval["magnitude"],
+        "jerk": motion_eval["jerk"],
+        "motion_variance": motion_eval["variance"],
+        "activity_state": motion_eval["activity_code"],
+        "activity_level": motion_eval["activity_state"],
+        "activity_label": motion_eval["activity_state"],
+        "activity_intensity": motion_eval["intensity"],
+        "is_fall_candidate": motion_eval["activity_code"] == 6 or motion_eval.get("fall_candidate", False),
+        "fall_candidate": motion_eval["activity_code"] == 6 or motion_eval.get("fall_candidate", False),
+        "is_active": motion_eval["is_active"],
+        "is_rest": motion_eval["is_rest"],
+        # Personal Baseline Deviations
         "hr_deviation": hr_dev,
         "spo2_deviation": spo2_dev,
         "temp_deviation": temp_dev,
         "hr_z_score": deviations["heart_rate"]["z_score"],
         "spo2_z_score": deviations["spo2"]["z_score"],
         "temp_z_score": deviations["body_temperature"]["z_score"],
-        "mq45_z_score": deviations["mq45"]["z_score"],
+        "duration_hr_outside_sec": deviations["heart_rate"]["duration_outside_sec"],
+        "duration_spo2_outside_sec": deviations["spo2"]["duration_outside_sec"],
         "hr_trend": hr_rolling["roc"],
         "spo2_trend": spo2_rolling["roc"],
-        "temperature_trend": temp_rolling["roc"],
-        "hr_roc": hr_rolling["roc"],
-        "spo2_roc": spo2_rolling["roc"],
-        "temp_roc": temp_rolling["roc"],
-        "baseline_deviation": deviations,
+        "temp_trend": temp_rolling["roc"],
         "baseline_summary": deviations,
+        # Sensor Health & Qualities
+        "sensor_qualities": sensor_qualities,
+        "overall_sensor_confidence": quality_eval["overall_sensor_confidence"],
+        "adxl_available": adxl_available,
+        "ppg_available": quality_eval["ppg_available"],
+        "ntc_available": quality_eval["ntc_available"],
     }
 
-    return feature_dict
+    # 7. Update Temporal Sequence and compute Tiny TCN embedding
+    history.add(raw_reading, feature_dict)
+    tcn_seq = list(history.tcn_sequence)
+    tcn_embedding = tcn_engine.extract_temporal_embedding(tcn_seq)
+    feature_dict["tcn_embedding"] = [round(float(v), 4) for v in tcn_embedding]
 
+    return feature_dict

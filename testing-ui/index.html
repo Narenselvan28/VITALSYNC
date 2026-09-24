@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AAROGYA-SHIELD — Smartwatch Testing & Edge-AI Simulation Lab</title>
-  <meta name="description" content="Dedicated edge-AI smartwatch testing interface, physiological simulation lab, and caretaker alert validation for Aarogya-Shield." />
+  <title>VITALSYNC — Smartwatch Testing & Edge-AI Simulation Lab</title>
+  <meta name="description" content="Dedicated edge-AI smartwatch testing interface, physiological simulation lab, and caretaker alert validation for VITALSYNC." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -28,7 +28,7 @@
           </svg>
         </div>
         <div>
-          <h1 class="brand-title">AAROGYA-SHIELD</h1>
+          <h1 class="brand-title">VITALSYNC</h1>
           <span class="brand-subtitle">SMART HEALTH COMPANION · EDGE-AI SIMULATION LAB</span>
         </div>
       </div>
@@ -46,6 +46,7 @@
         <span class="status-pill" id="pill-rpi" title="Target Edge Deployment">
           <span class="status-dot green"></span> NODE: <strong>PI 4 LOCAL</strong>
         </span>
+        <a href="/" class="status-pill status-pill-link" id="pill-watch-link" title="Open Smartwatch Companion View">⌚ WATCH COMPANION ↗</a>
       </div>
     </header>
 
@@ -74,7 +75,7 @@
                   <div class="watch-page" data-page="0" id="watch-page-home">
                     <div class="watch-status-bar">
                       <span class="watch-clock font-mono" id="w-clock">10:42</span>
-                      <span class="watch-brand-tag font-mono">AAROGYA</span>
+                      <span class="watch-brand-tag font-mono">VITALSYNC</span>
                       <span class="watch-edge-indicator font-mono">● EDGE</span>
                     </div>
 
@@ -330,9 +331,56 @@
               <h2 class="section-title">SIMULATION LAB</h2>
               <span class="section-desc">Interactive biosignal generator & edge inference testbed</span>
             </div>
-            <div class="lab-live-badge font-mono">
-              <span class="pulse-dot green" id="dot-simulator-live"></span>
-              <span id="lbl-simulator-live">SIMULATOR READY</span>
+            <div class="header-right-controls">
+              <!-- Source Mode Toggle: Simulator vs Real Sensors -->
+              <div class="source-toggle-wrap">
+                <span class="source-toggle-label font-mono">DATA SOURCE:</span>
+                <div class="source-toggle-switch" role="radiogroup" aria-label="Sensor Source Mode">
+                  <button type="button" class="source-toggle-btn active" id="btn-src-sim" role="radio" aria-checked="true" title="Control manual sliders & presets">
+                    <span class="pulse-dot green" id="dot-src-sim"></span> SIMULATOR
+                  </button>
+                  <button type="button" class="source-toggle-btn" id="btn-src-real" role="radio" aria-checked="false" title="Ingest live ESP32 hardware telemetry">
+                    <span class="pulse-dot gray" id="dot-src-real"></span> REAL SENSORS
+                  </button>
+                </div>
+              </div>
+              <div class="lab-live-badge font-mono">
+                <span class="pulse-dot green" id="dot-simulator-live"></span>
+                <span id="lbl-simulator-live">SIMULATOR ACTIVE</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Real Sensors Hardware Banner (Visible only in Real Sensors Mode) -->
+          <div id="real-sensors-banner" class="real-sensors-banner hidden font-mono">
+            <div class="hw-banner-top">
+              <div class="hw-banner-status">
+                <span class="pulse-dot green"></span>
+                <strong>ESP32 HARDWARE NODE ACTIVE (ESP32-001)</strong>
+              </div>
+              <span class="hw-packet-rate" id="lbl-hw-packets">PACKETS: 0 · LIVE 1 Hz</span>
+            </div>
+            <div class="hw-sensor-telemetry-grid">
+              <div class="hw-telemetry-chip">
+                <span class="hw-chip-lbl">MAX30102 PPG</span>
+                <span class="hw-chip-val" id="lbl-hw-ppg">FINGER DETECTED (96%)</span>
+              </div>
+              <div class="hw-telemetry-chip">
+                <span class="hw-chip-lbl">ADXL345 MOTION</span>
+                <span class="hw-chip-val" id="lbl-hw-motion">0.98 g (REST)</span>
+              </div>
+              <div class="hw-telemetry-chip">
+                <span class="hw-chip-lbl">DHT22 AMBIENT</span>
+                <span class="hw-chip-val" id="lbl-hw-dht">28.0°C / 60%</span>
+              </div>
+              <div class="hw-telemetry-chip">
+                <span class="hw-chip-lbl">MQ-45 AIR EXPOSURE</span>
+                <span class="hw-chip-val" id="lbl-hw-mq">180 (NOMINAL)</span>
+              </div>
+            </div>
+            <div class="hw-banner-footer">
+              <span>Manual sliders locked. Displaying live hardware stream from <code>/api/sensors/readings</code>.</span>
+              <button type="button" class="btn-micro" id="btn-hw-ping" title="Send a test hardware reading to verify connection">TEST HARDWARE PING</button>
             </div>
           </div>
 
@@ -347,6 +395,75 @@
             </div>
           </div>
 
+          <!-- Personalized Patient Profile & Adaptive Thresholds (Section 1-13) -->
+          <div class="profile-section-card font-mono" id="lab-profile-card">
+            <div class="profile-section-header">
+              <div class="psh-title-group">
+                <span class="psh-icon">👤</span>
+                <div>
+                  <h3 class="psh-title">PATIENT HEALTH PROFILE</h3>
+                  <span class="psh-subtitle">Personalized risk thresholds, active condition contexts & non-diagnostic framing</span>
+                </div>
+              </div>
+              <div class="psh-meta-tags">
+                <span class="badge-profile-ver" id="lab-prof-ver">v1.0</span>
+                <span class="badge-profile-status" id="lab-prof-status">LEARNING</span>
+              </div>
+            </div>
+
+            <!-- Profile Summary Strip -->
+            <div class="profile-summary-grid">
+              <div class="psg-cell">
+                <span class="psg-lbl">AGE/SEX:</span>
+                <strong id="lab-prof-age-sex">45 · M</strong>
+              </div>
+              <div class="psg-cell">
+                <span class="psg-lbl">HEIGHT/WEIGHT:</span>
+                <strong id="lab-prof-ht-wt">170 cm · 72 kg</strong>
+              </div>
+              <div class="psg-cell">
+                <span class="psg-lbl">CONDITIONS:</span>
+                <strong id="lab-prof-conditions">No known condition</strong>
+              </div>
+              <div class="psg-cell">
+                <span class="psg-lbl">MEDICATIONS:</span>
+                <strong id="lab-prof-meds">None (Context only)</strong>
+              </div>
+            </div>
+
+            <!-- Active Condition Contexts & Decision Transparency -->
+            <div class="profile-contexts-bar">
+              <div class="pcb-row">
+                <span class="pcb-lbl">ACTIVE CONTEXTS:</span>
+                <div class="pcb-chips" id="lab-prof-contexts">
+                  <span class="chip-ctx">nominal_monitoring</span>
+                </div>
+              </div>
+              <div class="pcb-row">
+                <span class="pcb-lbl">DECISION SOURCES:</span>
+                <div class="pcb-chips" id="lab-prof-decision-sources">
+                  <span class="chip-src">REFERENCE_THRESHOLD</span>
+                  <span class="chip-src">PERSONAL_BASELINE</span>
+                </div>
+              </div>
+              <div class="pcb-notice hidden" id="lab-prof-notice"></div>
+            </div>
+
+            <!-- Quick Profile Test Switches -->
+            <div class="profile-quick-switches">
+              <span class="pqs-title">SWITCH TEST PROFILE:</span>
+              <div class="pqs-btn-group" id="profile-preset-btns">
+                <button type="button" class="btn btn-profile-preset active" data-profile="healthy">👤 Healthy (Default)</button>
+                <button type="button" class="btn btn-profile-preset" data-profile="asthma">🫁 Asthma / Resp</button>
+                <button type="button" class="btn btn-profile-preset" data-profile="cardiovascular">❤️ Cardiovascular</button>
+                <button type="button" class="btn btn-profile-preset" data-profile="hypertension">🩸 Hypertension</button>
+                <button type="button" class="btn btn-profile-preset" data-profile="diabetes">🩺 Diabetes</button>
+                <button type="button" class="btn btn-profile-preset" data-profile="copd">💨 COPD</button>
+                <button type="button" class="btn btn-profile-preset" data-profile="asthma_htn">🫁❤️ Asthma + HTN</button>
+              </div>
+            </div>
+          </div>
+
           <!-- Preset Scenarios -->
           <div class="presets-section">
             <div class="section-subhead">
@@ -355,12 +472,15 @@
             </div>
             <div class="preset-grid">
               <button class="btn btn-preset" id="preset-normal" data-preset="normal">NORMAL</button>
+              <button class="btn btn-preset" id="preset-exercise" data-preset="exercise">EXERCISE (HR 150)</button>
+              <button class="btn btn-preset" id="preset-spike" data-preset="hr_spike">HR SPIKE (198)</button>
+              <button class="btn btn-preset" id="preset-tachycardia" data-preset="tachycardia">REST TACHYCARDIA</button>
               <button class="btn btn-preset" id="preset-early-resp" data-preset="early_resp">EARLY RESPIRATORY</button>
               <button class="btn btn-preset" id="preset-resp-elev" data-preset="resp_elev">RESPIRATORY ELEVATED</button>
               <button class="btn btn-preset" id="preset-heat" data-preset="heat">HEAT STRESS</button>
-              <button class="btn btn-preset" id="preset-env" data-preset="env">ENVIRONMENT</button>
-              <button class="btn btn-preset" id="preset-fatigue" data-preset="fatigue">FATIGUE</button>
-              <button class="btn btn-preset" id="preset-critical" data-preset="critical">CRITICAL</button>
+              <button class="btn btn-preset" id="preset-ntc" data-preset="ntc_beverage">NTC BEVERAGE TOUCH</button>
+              <button class="btn btn-preset" id="preset-env" data-preset="gas_exposure">GAS EXPOSURE (780)</button>
+              <button class="btn btn-preset" id="preset-critical" data-preset="critical">CRITICAL MULTI-PARAM</button>
               <button class="btn btn-preset" id="preset-recovery" data-preset="recovery">RECOVERY</button>
             </div>
           </div>
@@ -562,12 +682,12 @@
           </div>
         </div>
 
-        <!-- ML Model Output Suite & Contributing Features -->
+        <!-- ML Model Output Suite & Root-Cause Clinical Context -->
         <div class="ml-suite-grid">
-          <!-- ML Model Scores Table -->
+          <!-- Left: 8-Domain Decoupled Risk Matrix & Sensor Trust -->
           <div class="card ml-results-card">
             <div class="card-header">
-              <h3>ML MODEL SUITE OUTPUT</h3>
+              <h3>8-DOMAIN DECOUPLED RISK ENGINE</h3>
               <div class="overall-risk-badge font-mono" id="chip-overall-risk">
                 <span id="txt-overall-lvl">LOW</span>
                 <span id="txt-overall-score">0.08</span>
@@ -578,33 +698,122 @@
             <table class="ml-models-table font-mono">
               <thead>
                 <tr>
-                  <th>MODEL COMPONENT</th>
+                  <th>DOMAIN</th>
                   <th>SCORE</th>
-                  <th>RISK LEVEL</th>
+                  <th>STATUS</th>
+                  <th>CONTRIBUTING PATTERN</th>
                 </tr>
               </thead>
               <tbody id="ml-models-body">
-                <tr><td>Respiratory Risk</td><td id="ml-score-resp">0.10</td><td><span class="badge-lvl lvl-low" id="ml-lvl-resp">LOW</span></td></tr>
-                <tr><td>Oxygenation Anomaly</td><td id="ml-score-oxy">0.08</td><td><span class="badge-lvl lvl-low" id="ml-lvl-oxy">LOW</span></td></tr>
-                <tr><td>Heat-Stress Risk</td><td id="ml-score-heat">0.10</td><td><span class="badge-lvl lvl-low" id="ml-lvl-heat">LOW</span></td></tr>
-                <tr><td>Activity / Fatigue Risk</td><td id="ml-score-fatigue">0.10</td><td><span class="badge-lvl lvl-low" id="ml-lvl-fatigue">LOW</span></td></tr>
-                <tr><td>Environmental Exposure</td><td id="ml-score-env">0.10</td><td><span class="badge-lvl lvl-low" id="ml-lvl-env">LOW</span></td></tr>
-                <tr><td>General Anomaly Score</td><td id="ml-score-gen">0.10</td><td><span class="badge-lvl lvl-low" id="ml-lvl-gen">LOW</span></td></tr>
+                <tr><td>Heart Rate Anomaly</td><td id="ml-score-hr">0.08</td><td><span class="badge-lvl lvl-low" id="ml-lvl-hr">LOW</span></td><td class="text-xs text-muted" id="ml-reason-hr">Within baseline</td></tr>
+                <tr><td>Oxygenation Anomaly</td><td id="ml-score-oxy">0.08</td><td><span class="badge-lvl lvl-low" id="ml-lvl-oxy">LOW</span></td><td class="text-xs text-muted" id="ml-reason-oxy">Normal SpO2</td></tr>
+                <tr><td>Respiratory Risk</td><td id="ml-score-resp">0.10</td><td><span class="badge-lvl lvl-low" id="ml-lvl-resp">LOW</span></td><td class="text-xs text-muted" id="ml-reason-resp">No acute distress</td></tr>
+                <tr><td>Thermal Strain</td><td id="ml-score-heat">0.10</td><td><span class="badge-lvl lvl-low" id="ml-lvl-heat">LOW</span></td><td class="text-xs text-muted" id="ml-reason-heat">Thermal equilibrium</td></tr>
+                <tr><td>Environmental Exposure</td><td id="ml-score-env">0.10</td><td><span class="badge-lvl lvl-low" id="ml-lvl-env">LOW</span></td><td class="text-xs text-muted" id="ml-reason-env">Nominal air index</td></tr>
+                <tr><td>Activity Strain</td><td id="ml-score-fatigue">0.10</td><td><span class="badge-lvl lvl-low" id="ml-lvl-fatigue">LOW</span></td><td class="text-xs text-muted" id="ml-reason-fatigue">Normal movement</td></tr>
+                <tr><td>Fall / Immobility Event</td><td id="ml-score-fall">0.00</td><td><span class="badge-lvl lvl-low" id="ml-lvl-fall">NONE</span></td><td class="text-xs text-muted" id="ml-reason-fall">Normal posture</td></tr>
+                <tr><td>General Anomaly Score</td><td id="ml-score-gen">0.10</td><td><span class="badge-lvl lvl-low" id="ml-lvl-gen">LOW</span></td><td class="text-xs text-muted" id="ml-reason-gen">IsolationForest nominal</td></tr>
               </tbody>
             </table>
+
+            <!-- Sensor Trust & Reliability Bar -->
+            <div class="sensor-quality-bar font-mono">
+              <div class="sq-chip">
+                <span class="sq-chip-lbl">MAX30102</span>
+                <span class="sq-chip-val sq-good" id="sq-ppg">GOOD (96%)</span>
+              </div>
+              <div class="sq-chip">
+                <span class="sq-chip-lbl">ADXL345</span>
+                <span class="sq-chip-val sq-good" id="sq-adxl">GOOD</span>
+              </div>
+              <div class="sq-chip">
+                <span class="sq-chip-lbl">NTC TEMP</span>
+                <span class="sq-chip-val sq-good" id="sq-ntc">GOOD</span>
+              </div>
+              <div class="sq-chip">
+                <span class="sq-chip-lbl">MQ-45</span>
+                <span class="sq-chip-val sq-good" id="sq-mq45">GOOD</span>
+              </div>
+              <div class="sq-chip">
+                <span class="sq-chip-lbl">GPS NEO-7</span>
+                <span class="sq-chip-val sq-good" id="sq-gps">FIX (3D)</span>
+              </div>
+              <div class="sq-chip">
+                <span class="sq-chip-lbl">WEATHER</span>
+                <span class="sq-chip-val sq-good" id="sq-weather-mode">AUGMENTED</span>
+              </div>
+            </div>
           </div>
 
-          <!-- Why Did The Model Change? -->
-          <div class="card why-card">
+          <!-- Right: Root-Cause Analysis & 8 Clinical Questions -->
+          <div class="card root-cause-card font-mono">
             <div class="card-header">
-              <h3>CONTRIBUTING MODEL FEATURES</h3>
-              <span class="badge-sub font-mono">BACKEND ATTRIBUTION</span>
+              <h3>ROOT-CAUSE & CLINICAL-CONTEXT ENGINE</h3>
+              <div class="root-cause-header-badge" id="chip-root-cause">
+                <span id="txt-root-cause-primary">NORMAL_PHYSIOLOGY</span>
+                <span id="txt-root-cause-conf">95% CONF</span>
+              </div>
             </div>
-            <div class="why-list font-mono" id="why-features-list">
-              <div class="why-item">
-                <span class="why-weight text-green">+0.00</span>
-                <span class="why-desc">All parameters within personal baseline</span>
-                <span class="why-detail text-muted">Nominal physiological balance</span>
+
+            <!-- 8 Clinical Questions Matrix -->
+            <div class="clinical-qa-grid">
+              <div class="qa-item">
+                <div class="qa-q"><span>1. WHAT CHANGED?</span></div>
+                <div class="qa-a" id="ans-what-changed">All parameters tracking within personal baseline limits.</div>
+              </div>
+
+              <div class="qa-item">
+                <div class="qa-q"><span>2. ARTIFACT OR GENUINE?</span></div>
+                <div class="qa-a" id="ans-genuine-verdict">GENUINE SIGNAL: High optical quality (0.96) confirms valid contact.</div>
+              </div>
+
+              <div class="qa-item">
+                <div class="qa-q"><span>3. CONTRIBUTING CONTEXT</span></div>
+                <div class="qa-a" id="ans-contributing-context">Nominal baseline context under REST activity conditions.</div>
+              </div>
+
+              <div class="qa-item">
+                <div class="qa-q"><span>4. MULTI-SIGNAL INDEPENDENT SUPPORT</span></div>
+                <div class="qa-a" id="ans-multimodal-verdict">NOMINAL: Zero abnormal signals detected across all sensors.</div>
+              </div>
+
+              <div class="qa-item">
+                <div class="qa-q"><span>5. TEMPORAL PERSISTENCE</span></div>
+                <div class="qa-a" id="ans-temporal-verdict">Stable temporal baseline with no significant deviation.</div>
+              </div>
+
+              <div class="qa-item">
+                <div class="qa-q"><span>6. RECOVERY IN PROGRESS?</span></div>
+                <div class="qa-a" id="ans-recovery-verdict">STABLE: User is in stable resting equilibrium within normal bounds.</div>
+              </div>
+
+              <div class="qa-item">
+                <div class="qa-q"><span>7. ALERT DECISION</span></div>
+                <div class="qa-a" id="ans-alert-verdict">CLEAR: System in nominal state. No active alerts.</div>
+              </div>
+
+              <div class="qa-item">
+                <div class="qa-q"><span>8. WHY CONCLUSION REACHED?</span></div>
+                <div class="reasoning-summary-box" id="ans-reasoning-summary">
+                  All primary vital signs, activity metrics, and environmental indicators track within personal baseline limits.
+                </div>
+              </div>
+            </div>
+
+            <!-- Supporting & Contradicting Evidence Chips -->
+            <div class="evidence-section">
+              <span class="text-xs text-muted font-bold">SUPPORTING EVIDENCE:</span>
+              <div class="evidence-chips-wrap" id="rc-supporting-chips">
+                <span class="chip-evidence">Heart rate within baseline</span>
+                <span class="chip-evidence">SpO2 stable (98%)</span>
+                <span class="chip-evidence">Motion resting (1.0g)</span>
+              </div>
+
+              <div style="margin-top: 6px;">
+                <span class="text-xs text-muted font-bold">CONTRADICTING EVIDENCE:</span>
+                <div class="evidence-chips-wrap" id="rc-contradicting-chips">
+                  <span class="chip-evidence-contra">No persistent hypoxia</span>
+                </div>
               </div>
             </div>
           </div>

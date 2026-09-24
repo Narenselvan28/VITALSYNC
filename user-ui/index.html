@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AAROGYA-SHIELD — Smartwatch Health Companion</title>
+  <meta name="description" content="AAROGYA-SHIELD / VITALSYNC: Realistic Light-Mode Wearable Health Interface." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/styles.css" />
+</head>
+<body class="light-mode-wearable-body">
+
+  <div class="wearable-workspace">
+    <!-- Watch Hardware Frame -->
+    <div class="watch-hardware-case" id="smartwatchFrame">
+      
+      <!-- Tactile Crown & Physical Button -->
+      <div class="watch-crown-knob" id="crownBtn" title="Digital Crown" aria-label="Digital Crown"></div>
+      <div class="watch-side-key" id="sideBtn" title="Side Action Key" aria-label="Side Action Key"></div>
+
+      <!-- Realistic Light-Mode Wearable Display -->
+      <div class="watch-display-bezel" id="watchScreen" tabindex="0">
+        
+        <!-- Top Status Row -->
+        <header class="watch-top-row">
+          <div class="watch-clock" id="watchTime">09:42</div>
+          <div class="watch-date" id="watchDate">THU 24 SEP</div>
+          <div class="watch-top-actions">
+            <button class="watch-profile-btn" id="btnOpenProfile" title="Set Up Health Profile" aria-label="Set Up Health Profile">👤</button>
+            <div class="battery-indicator">
+              <span class="bat-text">98%</span>
+              <div class="bat-pill"><div class="bat-fill" style="width: 98%;"></div></div>
+            </div>
+          </div>
+        </header>
+
+        <!-- Monitoring Status Pill -->
+        <div class="status-pill-wrap">
+          <div class="monitoring-pill" id="monitoringPill">
+            <span class="pulse-dot" id="statusPulseDot"></span>
+            <span class="status-label" id="statusLabel">● Monitoring</span>
+            <span class="seq-tag font-mono" id="seqTag">seq #1000</span>
+          </div>
+        </div>
+
+        <!-- Personalized Monitoring & Baseline Status Banner (Section 6 & 15) -->
+        <div class="profile-status-bar" id="profileStatusBar">
+          <div class="psb-header">
+            <span class="psb-dot learning" id="psbDot"></span>
+            <span class="psb-title" id="psbTitle">Learning personal baseline...</span>
+            <span class="psb-version font-mono" id="psbVersion">v1.0</span>
+          </div>
+          <div class="psb-grid" id="psbGrid">
+            <div class="psb-item"><span class="psb-lbl">HR:</span> <span class="psb-val font-mono" id="psbHR">Learning</span></div>
+            <div class="psb-item"><span class="psb-lbl">SpO₂:</span> <span class="psb-val font-mono" id="psbSpO2">Learning</span></div>
+            <div class="psb-item"><span class="psb-lbl">Temp:</span> <span class="psb-val font-mono" id="psbTemp">Learning</span></div>
+            <div class="psb-item"><span class="psb-lbl">Activity:</span> <span class="psb-val font-mono" id="psbAct">Learning</span></div>
+          </div>
+          <div class="psb-context-tags hidden" id="psbContextTags"></div>
+        </div>
+
+        <!-- Main Watch Face Primary Vitals (Section 18) -->
+        <main class="watch-content-grid" id="watchFaceContent">
+          
+          <!-- Primary Row: HR & SpO2 -->
+          <div class="vitals-two-col">
+            <!-- HR Box -->
+            <div class="vital-tile" id="tileHR">
+              <div class="tile-header">
+                <span class="tile-icon">❤️</span>
+                <span class="tile-title">HEART RATE</span>
+              </div>
+              <div class="tile-value-row">
+                <span class="tile-num font-mono" id="valHR">78</span>
+                <span class="tile-unit">BPM</span>
+              </div>
+              <div class="tile-subtext" id="subHR">Resting · Nominal</div>
+            </div>
+
+            <!-- SpO2 Box -->
+            <div class="vital-tile" id="tileSpO2">
+              <div class="tile-header">
+                <span class="tile-icon">💧</span>
+                <span class="tile-title">OXYGENATION</span>
+              </div>
+              <div class="tile-value-row">
+                <span class="tile-num font-mono" id="valSpO2">98</span>
+                <span class="tile-unit">% SpO₂</span>
+              </div>
+              <div class="tile-subtext" id="subSpO2">Optimal range</div>
+            </div>
+          </div>
+
+          <!-- Secondary Row: Temperature & Activity -->
+          <div class="vitals-two-col">
+            <!-- Temperature Box -->
+            <div class="vital-tile" id="tileTemp">
+              <div class="tile-header">
+                <span class="tile-icon">🌡️</span>
+                <span class="tile-title">BODY TEMP</span>
+              </div>
+              <div class="tile-value-row">
+                <span class="tile-num font-mono" id="valTemp">36.7</span>
+                <span class="tile-unit">°C</span>
+              </div>
+              <div class="tile-subtext" id="subTemp">Contact steady</div>
+            </div>
+
+            <!-- Activity Box -->
+            <div class="vital-tile" id="tileActivity">
+              <div class="tile-header">
+                <span class="tile-icon">🏃</span>
+                <span class="tile-title">ACTIVITY</span>
+              </div>
+              <div class="tile-value-row">
+                <span class="tile-num-state" id="valActivity">REST</span>
+              </div>
+              <div class="tile-subtext" id="subActivity">0.98 g motion</div>
+            </div>
+          </div>
+
+          <!-- Health Risk Assessment Banner (Section 12, 18, 20) -->
+          <div class="risk-card" id="riskCard">
+            <div class="risk-card-top">
+              <span class="risk-label">Health Risk</span>
+              <span class="risk-badge risk-low font-mono" id="riskBadge">LOW</span>
+            </div>
+            <div class="risk-summary" id="riskSummary">All physiological parameters within personal baseline norms.</div>
+            <div class="risk-decision-sources text-xs font-mono" id="riskDecisionSources">
+              <span class="rds-label">Evidence:</span> <span id="rdsList">REFERENCE_THRESHOLD, PERSONAL_BASELINE</span>
+            </div>
+            <div class="risk-profile-notice text-xs hidden" id="riskProfileNotice"></div>
+          </div>
+
+          <!-- Subtle Environmental Footer -->
+          <div class="environment-footer">
+            <span id="envAmbient">Amb: 28.0°C</span>
+            <span class="env-divider">·</span>
+            <span id="envAir">Air: Safe (180)</span>
+            <span class="env-divider">·</span>
+            <span id="envGPS">GPS: Fix</span>
+          </div>
+
+        </main>
+
+        <!-- =====================================================================
+             HEALTH PROFILE ONBOARDING & SETTINGS MODAL (Section 1, 2, 3, 15)
+             ===================================================================== -->
+        <div class="watch-profile-modal hidden" id="profileModal" role="dialog" aria-modal="true" aria-labelledby="profileHeading">
+          <div class="profile-card-modal">
+            <div class="profile-modal-top">
+              <div class="profile-heading-group">
+                <div class="profile-icon-badge">🛡️</div>
+                <div>
+                  <h2 class="profile-heading" id="profileHeading">HEALTH PROFILE</h2>
+                  <p class="profile-subheading">Tell us about your health so we can personalize monitoring.</p>
+                </div>
+              </div>
+              <button type="button" class="profile-close-btn" id="btnCloseProfile" aria-label="Close Profile">✕</button>
+            </div>
+
+            <form id="profileForm" class="profile-form">
+              <!-- Basic Information -->
+              <div class="form-group-title">BASIC INFORMATION</div>
+              <div class="profile-row-inputs">
+                <div class="input-col">
+                  <label for="profAge">Age</label>
+                  <input type="number" id="profAge" name="age" min="1" max="120" value="45" required />
+                </div>
+                <div class="input-col">
+                  <label for="profSex">Sex</label>
+                  <select id="profSex" name="sex">
+                    <option value="M">Male (M)</option>
+                    <option value="F">Female (F)</option>
+                    <option value="Other">Other</option>
+                    <option value="Prefer not to say">Prefer not to say</option>
+                  </select>
+                </div>
+                <div class="input-col">
+                  <label for="profHeight">Height</label>
+                  <div class="input-with-unit">
+                    <input type="number" id="profHeight" name="height_cm" min="50" max="250" value="170" required />
+                    <span class="unit-tag">cm</span>
+                  </div>
+                </div>
+                <div class="input-col">
+                  <label for="profWeight">Weight</label>
+                  <div class="input-with-unit">
+                    <input type="number" id="profWeight" name="weight_kg" min="20" max="300" value="72" required />
+                    <span class="unit-tag">kg</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Health Conditions (Multiple Allowed) -->
+              <div class="form-group-title">
+                <span>HEALTH CONDITIONS</span>
+                <span class="hint-text">(Multiple selections allowed)</span>
+              </div>
+              <div class="conditions-grid" id="conditionsGrid">
+                <label class="cond-box" for="cond-none">
+                  <input type="checkbox" name="condition" value="none" id="cond-none" />
+                  <span class="cond-text">No known condition</span>
+                </label>
+                <label class="cond-box" for="cond-asthma">
+                  <input type="checkbox" name="condition" value="asthma" id="cond-asthma" />
+                  <span class="cond-text">Asthma / respiratory condition</span>
+                </label>
+                <label class="cond-box" for="cond-cardiovascular">
+                  <input type="checkbox" name="condition" value="cardiovascular" id="cond-cardiovascular" />
+                  <span class="cond-text">Heart / cardiovascular condition</span>
+                </label>
+                <label class="cond-box" for="cond-diabetes">
+                  <input type="checkbox" name="condition" value="diabetes" id="cond-diabetes" />
+                  <span class="cond-text">Diabetes</span>
+                </label>
+                <label class="cond-box" for="cond-hypertension">
+                  <input type="checkbox" name="condition" value="hypertension" id="cond-hypertension" />
+                  <span class="cond-text">Hypertension</span>
+                </label>
+                <label class="cond-box" for="cond-copd">
+                  <input type="checkbox" name="condition" value="copd" id="cond-copd" />
+                  <span class="cond-text">COPD</span>
+                </label>
+                <label class="cond-box" for="cond-kidney">
+                  <input type="checkbox" name="condition" value="kidney" id="cond-kidney" />
+                  <span class="cond-text">Kidney condition</span>
+                </label>
+                <label class="cond-box" for="cond-other-resp">
+                  <input type="checkbox" name="condition" value="other_respiratory" id="cond-other-resp" />
+                  <span class="cond-text">Other respiratory condition</span>
+                </label>
+                <label class="cond-box" for="cond-other-cardio">
+                  <input type="checkbox" name="condition" value="other_cardiovascular" id="cond-other-cardio" />
+                  <span class="cond-text">Other cardiovascular condition</span>
+                </label>
+                <label class="cond-box" for="cond-other">
+                  <input type="checkbox" name="condition" value="other" id="cond-other" />
+                  <span class="cond-text">Other</span>
+                </label>
+                <label class="cond-box" for="cond-prefer-not">
+                  <input type="checkbox" name="condition" value="prefer_not_to_say" id="cond-prefer-not" />
+                  <span class="cond-text">Prefer not to say</span>
+                </label>
+              </div>
+
+              <!-- Medication / Treatment Context -->
+              <div class="form-group-title">
+                <span>MEDICATION CONTEXT</span>
+                <span class="hint-text">(Optional)</span>
+              </div>
+              <div class="medication-input-wrap">
+                <input type="text" id="profMedications" placeholder="e.g. Albuterol inhaler, Beta-blocker, ACE inhibitor" />
+                <div class="privacy-note">
+                  🔒 Profile & medications stored strictly local. Never sent to external or weather services.
+                </div>
+              </div>
+
+              <!-- Action Row -->
+              <div class="profile-action-bar">
+                <button type="submit" class="btn-profile-continue" id="btnSubmitProfile">
+                  <span>Save Profile & Continue</span>
+                  <span class="arrow-right">→</span>
+                </button>
+              </div>
+
+              <div class="medical-safety-tag">
+                <span>ℹ️ Prototype monitoring & early-warning system. Not for medical diagnosis.</span>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- =====================================================================
+             ALERT MODAL OVERLAYS (Section 19: Spike, Recovered, Critical)
+             ===================================================================== -->
+
+        <!-- 1. SPIKE ALERT MODAL -->
+        <div class="watch-alert-modal hidden" id="spikeAlertModal" role="dialog" aria-modal="true">
+          <div class="alert-box spike-box">
+            <div class="alert-category" id="spikeVitalName">HEART RATE</div>
+            <div class="alert-huge-val font-mono" id="spikeVal">198 BPM</div>
+            <div class="alert-headline" id="spikeHeadline">Spike detected</div>
+            <div class="alert-subline" id="spikeSubline">Monitoring recovery...</div>
+            <button class="alert-action-btn dismiss-btn" id="btnDismissSpike">DISMISS</button>
+          </div>
+        </div>
+
+        <!-- 2. RECOVERED ALERT MODAL -->
+        <div class="watch-alert-modal hidden" id="recoveredAlertModal" role="dialog" aria-modal="true">
+          <div class="alert-box recovered-box">
+            <div class="alert-category green-cat">RECOVERED</div>
+            <div class="alert-huge-val font-mono green-val" id="recoveredVal">82 BPM</div>
+            <div class="alert-headline">Heart rate back near baseline</div>
+            <div class="alert-subline">Transient spike resolved. System normal.</div>
+            <button class="alert-action-btn ok-btn" id="btnDismissRecovered">OK</button>
+          </div>
+        </div>
+
+        <!-- 3. TRUE CRITICAL ALERT MODAL -->
+        <div class="watch-alert-modal hidden" id="criticalAlertModal" role="dialog" aria-modal="true">
+          <div class="alert-box critical-box">
+            <div class="alert-category red-cat">HEALTH ALERT</div>
+            <div class="alert-headline" id="criticalHeadline">Persistent abnormal vital pattern</div>
+            <div class="alert-subline" id="criticalReason">Continuous elevation at rest. Multi-signal verification.</div>
+            <button class="alert-action-btn critical-action-btn" id="btnCheckUser">CHECK USER</button>
+          </div>
+        </div>
+
+      </div> <!-- /watch-display-bezel -->
+    </div> <!-- /watch-hardware-case -->
+
+    <!-- Companion Desktop Footer Hint -->
+    <div class="companion-sync-bar">
+      <span class="sync-dot connected" id="wsSyncDot"></span>
+      <span class="sync-text" id="wsSyncText">Authoritative Edge Stream Connected (1 Hz)</span>
+      <span class="sync-separator">|</span>
+      <span>Caretaker Contact: <strong>+919384438928</strong></span>
+      <span class="sync-separator">|</span>
+      <a href="/lab" class="lab-link-pill" title="Open Simulation & Testing Lab">🧪 Simulation Lab ↗</a>
+    </div>
+
+  </div> <!-- /wearable-workspace -->
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

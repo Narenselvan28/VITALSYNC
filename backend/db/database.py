@@ -1,5 +1,5 @@
 """
-AAROGYA-SHIELD: MongoDB Storage & Traceability Engine
+VITALSYNC: MongoDB Storage & Traceability Engine
 Manages document persistence across:
 sensor_readings, feature_vectors, predictions, risk_events, alerts, baselines, devices.
 Ensures every prediction and alert is traceable back to raw sensor telemetry.
@@ -11,7 +11,7 @@ import pymongo
 from typing import Dict, Any, List, Optional
 
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://127.0.0.1:27017/")
-DB_NAME = os.getenv("DB_NAME", "aarogya_shield")
+DB_NAME = os.getenv("DB_NAME", "vitalsync")
 
 class Database:
     def __init__(self):

@@ -1,5 +1,5 @@
 /**
- * AAROGYA-SHIELD: Developer Debug & Telemetry Inspector
+ * VITALSYNC: Developer Debug & Telemetry Inspector
  * Inspects real-time API transactions, HTTP status, roundtrip latency,
  * model artifacts status, and raw JSON request/response payloads.
  */

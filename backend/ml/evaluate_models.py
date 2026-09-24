@@ -1,5 +1,5 @@
 """
-AAROGYA-SHIELD: Model Evaluation Script
+VITALSYNC: Model Evaluation Script
 Loads trained models from backend/ml/models/ and runs evaluation
 across test distributions, printing comprehensive performance metrics.
 """
@@ -27,7 +27,7 @@ def evaluate_suite():
         version_data = json.load(f)
 
     print("==================================================")
-    print("AAROGYA-SHIELD: MODEL EVALUATION REPORT")
+    print("VITALSYNC: MODEL EVALUATION REPORT")
     print(f"Version: {version_data['version']}")
     print(f"Source: {version_data['source']}")
     print(f"Clinical Framing: {version_data['framing']}")

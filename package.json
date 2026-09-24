@@ -1,0 +1,11 @@
+{
+  "name": "aarogya-shield-vitalsync",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build_all.js",
+    "build:user": "npm --prefix user-ui run build",
+    "build:testing": "npm --prefix testing-ui run build"
+  }
+}

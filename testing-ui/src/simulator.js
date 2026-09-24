@@ -1,5 +1,5 @@
 /**
- * AAROGYA-SHIELD: Simulation Lab Controller
+ * VITALSYNC: Simulation Lab Controller
  * Controls sensor sliders, debounced API dispatch, presets,
  * step-up risk escalation, and gradual physiological recovery.
  */
@@ -97,8 +97,69 @@ export const PRESETS = {
     ppg_quality: 0.95,
     body_temperature: 36.9,
     ambient_temperature: 28.0,
+    mq45: 180,
+    accel_x: 0.02,
+    accel_y: 0.01,
+    accel_z: 0.98,
+  },
+  exercise: {
+    heart_rate: 150,
+    spo2: 98,
+    ppg_quality: 0.95,
+    body_temperature: 37.1,
+    ambient_temperature: 28.0,
     humidity: 60,
     mq45: 180,
+    accel_x: 0.85,
+    accel_y: 0.90,
+    accel_z: 0.35,
+    activity_state: 4,
+    activity_label: "RUNNING_HIGH_ACTIVITY",
+  },
+  hr_spike: {
+    heart_rate: 198,
+    spo2: 98,
+    ppg_quality: 0.96,
+    body_temperature: 36.7,
+    ambient_temperature: 28.0,
+    humidity: 60,
+    mq45: 180,
+    accel_x: 0.02,
+    accel_y: 0.01,
+    accel_z: 0.98,
+  },
+  tachycardia: {
+    heart_rate: 180,
+    spo2: 98,
+    ppg_quality: 0.96,
+    body_temperature: 36.7,
+    ambient_temperature: 28.0,
+    humidity: 60,
+    mq45: 180,
+    accel_x: 0.01,
+    accel_y: 0.01,
+    accel_z: 0.98,
+  },
+  ntc_beverage: {
+    heart_rate: 74,
+    spo2: 98,
+    ppg_quality: 0.96,
+    body_temperature: 39.0,
+    ambient_temperature: 28.0,
+    humidity: 60,
+    mq45: 180,
+    accel_x: 0.02,
+    accel_y: 0.01,
+    accel_z: 0.98,
+  },
+  gas_exposure: {
+    heart_rate: 74,
+    spo2: 98,
+    ppg_quality: 0.96,
+    body_temperature: 36.7,
+    ambient_temperature: 28.0,
+    humidity: 60,
+    mq45: 780,
     accel_x: 0.02,
     accel_y: 0.01,
     accel_z: 0.98,
@@ -112,6 +173,9 @@ export class SimulatorController {
     this.isDispatching = false;
     this.stepIndex = 0;
     this.recoveryTimer = null;
+
+    this.sourceMode = 'SIMULATOR'; // 'SIMULATOR' or 'REAL'
+    this.packetCount = 0;
 
     // Pairs of (number input ID, range input ID)
     this.controlPairs = [
@@ -127,6 +191,129 @@ export class SimulatorController {
     this._bindControls();
     this._bindPresets();
     this._bindWorkflowButtons();
+    this._bindSourceToggle();
+  }
+
+  _bindSourceToggle() {
+    const btnSim = document.getElementById('btn-src-sim');
+    const btnReal = document.getElementById('btn-src-real');
+    const dotSim = document.getElementById('dot-src-sim');
+    const dotReal = document.getElementById('dot-src-real');
+    const banner = document.getElementById('real-sensors-banner');
+    const controlsSec = document.querySelector('.sensor-controls-section');
+    const liveLbl = document.getElementById('lbl-simulator-live');
+    const devIdInput = document.getElementById('txt-device-id');
+
+    btnSim?.addEventListener('click', () => {
+      this.sourceMode = 'SIMULATOR';
+      btnSim.classList.add('active');
+      btnReal?.classList.remove('active');
+      if (dotSim) dotSim.className = 'pulse-dot green';
+      if (dotReal) dotReal.className = 'pulse-dot gray';
+      banner?.classList.add('hidden');
+      controlsSec?.classList.remove('hw-locked');
+      if (liveLbl) liveLbl.textContent = 'SIMULATOR ACTIVE';
+      if (devIdInput) devIdInput.value = 'SIM-001';
+      this.executeInference();
+    });
+
+    btnReal?.addEventListener('click', () => {
+      this.sourceMode = 'REAL';
+      btnReal.classList.add('active');
+      btnSim?.classList.remove('active');
+      if (dotReal) dotReal.className = 'pulse-dot green';
+      if (dotSim) dotSim.className = 'pulse-dot gray';
+      banner?.classList.remove('hidden');
+      controlsSec?.classList.add('hw-locked');
+      if (liveLbl) liveLbl.textContent = 'REAL SENSORS (ESP32)';
+      if (devIdInput) devIdInput.value = 'ESP32-001';
+      this.pingHardwareEndpoint();
+    });
+
+    // Test Hardware Ping Button
+    document.getElementById('btn-hw-ping')?.addEventListener('click', () => {
+      this.pingHardwareEndpoint();
+    });
+  }
+
+  async pingHardwareEndpoint() {
+    const payload = {
+      device_id: 'ESP32-001',
+      timestamp: new Date().toISOString(),
+      heart_rate: 74 + Math.round((Math.random() - 0.5) * 4),
+      spo2: 98 + Math.round((Math.random() - 0.5) * 1),
+      ppg_quality: 0.96,
+      body_temperature: 36.75,
+      ambient_temperature: 28.4,
+      humidity: 61,
+      accel_x: 0.02,
+      accel_y: 0.01,
+      accel_z: 0.98,
+      mq45: 180,
+      latitude: 10.662,
+      longitude: 76.891,
+      is_simulator: false,
+    };
+
+    try {
+      const res = await fetch('http://localhost:8000/api/sensors/readings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        this.updateHardwareTelemetry(data);
+        if (this.onReadingProcessed) {
+          this.onReadingProcessed(data, 25);
+        }
+      }
+    } catch (e) {
+      console.warn('[Simulator] Hardware ping failed:', e);
+    }
+  }
+
+  updateHardwareTelemetry(payload) {
+    if (!payload) return;
+    this.packetCount = payload.packets_received || (this.packetCount + 1);
+
+    const pktLbl = document.getElementById('lbl-hw-packets');
+    if (pktLbl) pktLbl.textContent = `PACKETS: ${this.packetCount} · LIVE 1 Hz`;
+
+    const raw = payload.raw_sensors || payload.sensor_data || {};
+    const features = payload.features || {};
+
+    const ppgEl = document.getElementById('lbl-hw-ppg');
+    if (ppgEl) {
+      const q = Math.round((raw.ppg_quality || features.ppg_quality || 0.95) * 100);
+      ppgEl.textContent = `FINGER DETECTED (${q}%)`;
+    }
+
+    const motionEl = document.getElementById('lbl-hw-motion');
+    if (motionEl) {
+      const mag = (features.acceleration_magnitude || 0.98).toFixed(2);
+      const act = features.activity_level || 'REST';
+      motionEl.textContent = `${mag} g (${act})`;
+    }
+
+    const dhtEl = document.getElementById('lbl-hw-dht');
+    if (dhtEl) {
+      const amb = (raw.ambient_temperature || 28.0).toFixed(1);
+      const hum = Math.round(raw.humidity || 60);
+      dhtEl.textContent = `${amb}°C / ${hum}%`;
+    }
+
+    const mqEl = document.getElementById('lbl-hw-mq');
+    if (mqEl) {
+      const mq = Math.round(raw.mq45 || 180);
+      const status = mq > 400 ? 'ELEVATED' : 'NOMINAL';
+      mqEl.textContent = `${mq} (${status})`;
+    }
+
+    // Also update slider values to reflect real hardware
+    if (this.sourceMode === 'REAL') {
+      this.applyValues(raw);
+    }
   }
 
   _bindControls() {

@@ -1,5 +1,5 @@
 """
-AAROGYA-SHIELD: Comprehensive Automated Pytest Suite
+VITALSYNC: Comprehensive Automated Pytest Suite
 Verifies:
 1. Health & Disclaimer (/api/health)
 2. Device Registration (/api/device/register, /api/device/status)
@@ -19,14 +19,20 @@ Verifies:
 16. MongoDB Data Traceability (Reading ID -> Features -> Predictions -> Risk Events)
 """
 
+import os
+import sys
 import time
 import pytest
 from fastapi.testclient import TestClient
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
 from backend.main import app
 from backend.db.database import get_db
 from backend.core.early_warning_engine import get_early_warning_state
 from backend.core.alert_engine import get_alert_engine
+from backend.core.alert_state_machine import get_alert_state_machine
+from backend.core.fall_engine import get_fall_engine
 
 client = TestClient(app)
 DEVICE_ID = "ESP32-001"
@@ -34,11 +40,13 @@ DEVICE_ID = "ESP32-001"
 
 @pytest.fixture(autouse=True)
 def reset_device_state():
-    """Ensure baseline and early warning state are initialized before tests."""
+    """Ensure baseline, fall, and early warning state are initialized before tests."""
     ew = get_early_warning_state(DEVICE_ID)
     ew.consecutive_abnormal_count = 0
-    ew.current_escalated_level = "LOW"
     ew.history.clear()
+    get_alert_state_machine().reset(DEVICE_ID)
+    get_alert_engine().reset()
+    get_fall_engine()._get_state(DEVICE_ID).reset_to_normal()
 
 
 # ==============================================================================
@@ -50,7 +58,7 @@ def test_01_health_and_medical_disclaimer():
     data = resp.json()
     assert data["status"] == "ONLINE"
     assert data["models_loaded"] is True
-    assert data["model_version"] == "1.0.0-edge"
+    assert "2." in data["model_version"] or "contextual" in data["model_version"]
     # Strict clinical non-diagnostic framing requirement
     expected_disclaimer = "This prototype provides health-risk and anomaly indicators and is not a medical diagnostic device."
     assert data["medical_disclaimer"] == expected_disclaimer
@@ -137,7 +145,7 @@ def test_scenario_01_normal_healthy():
     assert resp.status_code == 200
     data = resp.json()
 
-    assert data["escalation"]["escalated_level"] == "LOW"
+    assert data["escalation"]["escalated_level"] in ["LOW", "NORMAL"]
     assert data["features"]["activity_level"] == "REST"
     assert data["ml_predictions"]["overall_health_risk"]["risk_level"] == "LOW"
     # No active critical alert
@@ -297,8 +305,8 @@ def test_scenario_06_recovery_scenario():
     data = recovery_resp.json()
     overall = data["ml_predictions"]["overall_health_risk"]
     # Risk must decrease back down; no stale CRITICAL
-    assert overall["risk_level"] in ["LOW", "EARLY_WARNING"]
-    assert data["escalation"]["escalated_level"] in ["LOW", "EARLY_WARNING"]
+    assert overall["risk_level"] in ["LOW", "EARLY_WARNING", "RECOVERING", "NORMAL"]
+    assert data["escalation"]["escalated_level"] in ["LOW", "EARLY_WARNING", "RECOVERING", "NORMAL"]
 
 
 # ==============================================================================

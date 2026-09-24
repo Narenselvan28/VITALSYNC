@@ -1,5 +1,5 @@
 /**
- * AAROGYA-SHIELD: Smartwatch Wearable Controller
+ * VITALSYNC: Smartwatch Wearable Controller
  * Renders realistic wearable UI with 7 distinct screens,
  * supports touch swipe, keyboard navigation, and crown clicks.
  */
@@ -12,6 +12,7 @@ export class SmartwatchController {
     this.dots = document.querySelectorAll('.screen-dots .dot');
     this.crownBtn = document.getElementById('watch-crown');
     this.watchScreen = document.getElementById('watch-screen');
+    this.frame = document.getElementById('smartwatch-frame');
 
     // Rolling buffers for mini sparklines inside watch
     this.hrHistory = [72, 73, 74, 73, 74, 75, 74];
@@ -123,6 +124,10 @@ export class SmartwatchController {
     const homeDot = document.getElementById('w-home-status-dot');
     const homeText = document.getElementById('w-home-status-text');
     if (homeText) homeText.textContent = overallLevel.replace('_', ' ');
+
+    const isCritical = overallLevel === 'CRITICAL';
+    if (this.frame) this.frame.classList.toggle('haptic-shake', isCritical);
+    if (this.watchScreen) this.watchScreen.classList.toggle('alert-border-flash', isCritical);
 
     if (homeBadge && homeDot) {
       homeBadge.className = 'status-badge-lg ' + this._getLevelClass(overallLevel);

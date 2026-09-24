@@ -1,4 +1,4 @@
-# AAROGYA-SHIELD: Edge-AI Personal Health Monitoring & Early-Warning System
+# VITALSYNC: Edge-AI Personal Health Monitoring & Early-Warning System
 
 [![System Status](https://img.shields.io/badge/System-ONLINE-00e676.svg)](#)
 [![Hardware Target](https://img.shields.io/badge/Edge%20Target-Raspberry%20Pi%204-00f0ff.svg)](#)
@@ -6,7 +6,7 @@
 [![Clinical Dataset](https://img.shields.io/badge/Dataset-PhysioNet%20BIDMC-b388ff.svg)](#)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](#)
 
-AAROGYA-SHIELD is an edge-native personal health screening and early-warning platform designed to detect physiological anomalies and environmental strain before they escalate into acute emergencies. Deployable on edge gateways (such as a Raspberry Pi 4) paired with wearable multi-sensor nodes (ESP32), the system computes individual personal baselines, executes low-latency machine learning risk inference, applies trend persistence filtering, and broadcasts real-time telemetry to a medical-grade dashboard.
+VITALSYNC is an edge-native personal health screening and early-warning platform designed to detect physiological anomalies and environmental strain before they escalate into acute emergencies. Deployable on edge gateways (such as a Raspberry Pi 4) paired with wearable multi-sensor nodes (ESP32), the system computes individual personal baselines, executes low-latency machine learning risk inference, applies trend persistence filtering, and broadcasts real-time telemetry to a medical-grade dashboard.
 
 ---
 
@@ -112,12 +112,11 @@ SIH 2026/
 │       ├── model_registry.py      # Multi-model inference suite & explainability
 │       └── models/                # Serialized model artifacts (.joblib, .json)
 ├── firmware/
-│   ├── aarogya_shield_esp32.ino   # Arduino C++ sketch for ESP32 hardware
+│   ├── esp32_real_sensors.ino     # Production C++ Arduino firmware for 6 real sensors
 │   └── esp32_hardware_emulator.py # Python daemon simulating physical ESP32
-├── frontend/
-│   ├── index.html                 # Medical monitoring dashboard & simulator UI
-│   ├── styles.css                 # Dark medical glassmorphism CSS
-│   └── app.js                     # WebSocket client, Canvas charts, simulator dispatcher
+├── testing-ui/                    # Smartwatch Testing & Edge-AI Simulation Lab (Port 2134)
+├── user-ui/                       # Wearable Health Companion & Patient POV UI (Port 3000)
+├── start.bat                      # Unified single-click launcher
 ├── test_scenarios.py              # Automated 9-part end-to-end verification test suite
 ├── requirements.txt               # Pinned dependencies
 ├── .env.example                   # Environment configuration template

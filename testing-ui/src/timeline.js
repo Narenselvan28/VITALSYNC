@@ -1,5 +1,5 @@
 /**
- * AAROGYA-SHIELD: Timeline & Personal Baseline Display
+ * VITALSYNC: Timeline & Personal Baseline Display
  * Renders real backend risk events and baseline statistics.
  * Memory capped to 300 entries for Raspberry Pi 4 stability.
  */
@@ -17,10 +17,32 @@ export class TimelineController {
     const preds = payload.ml_predictions || payload.predictions || {};
     const escalation = payload.escalation || {};
     const overall = preds.overall_health_risk || preds.overall || {};
+    const spike = payload.spike || {};
 
     const level = escalation.escalated_level || overall.risk_level || 'LOW';
     const score = overall.score !== undefined ? overall.score : 0.08;
     const timeStr = payload.timestamp ? new Date(payload.timestamp).toLocaleTimeString() : new Date().toLocaleTimeString();
+
+    // Check if a dedicated spike or recovery event was emitted
+    if (spike.events_emitted && spike.events_emitted.length > 0) {
+      for (const spEv of spike.events_emitted) {
+        if (spEv.type === 'SPIKE_EVENT') {
+          this.addEntry({
+            time: spEv.timestamp ? new Date(spEv.timestamp).toLocaleTimeString() : timeStr,
+            level: 'SPIKE',
+            score: '0.50',
+            details: `⚡ ${spEv.domain} spike: ${spEv.previous} → ${spEv.current} (Rapid change detected)`,
+          });
+        } else if (spEv.type === 'RECOVERY_EVENT') {
+          this.addEntry({
+            time: spEv.timestamp ? new Date(spEv.timestamp).toLocaleTimeString() : timeStr,
+            level: 'RECOVERED',
+            score: '0.10',
+            details: `✓ ${spEv.domain} recovery: ${spEv.current} back near baseline`,
+          });
+        }
+      }
+    }
 
     let details = 'All physiological parameters within personal baseline';
     if (escalation.reasons && escalation.reasons.length > 0) {
@@ -113,8 +135,10 @@ export class TimelineController {
   _getLevelClass(lvl) {
     switch (lvl) {
       case 'CRITICAL': return 'lvl-critical';
-      case 'ELEVATED': return 'lvl-elevated';
+      case 'ELEVATED':
+      case 'SPIKE': return 'lvl-elevated';
       case 'EARLY_WARNING': return 'lvl-early';
+      case 'RECOVERED': return 'lvl-low';
       default: return 'lvl-low';
     }
   }

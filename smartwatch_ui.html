@@ -1,0 +1,1667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VITALSYNC — Edge-AI Smartwatch Companion</title>
+    <style>
+        /* =====================================================================
+           RESET & GLOBAL SETUP
+           ===================================================================== */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background-color: #0b0f19;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 24px;
+            background-image: 
+                radial-gradient(circle at 50% 20%, rgba(30, 58, 138, 0.25) 0%, transparent 60%),
+                radial-gradient(circle at 50% 80%, rgba(15, 23, 42, 0.9) 0%, #030712 100%);
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+
+        /* Ambient Desk Glow */
+        .workspace-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .desktop-hint {
+            font-size: 12px;
+            color: #64748b;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+
+        .desktop-hint kbd {
+            background: #1e293b;
+            color: #38bdf8;
+            padding: 2px 7px;
+            border-radius: 4px;
+            border: 1px solid #334155;
+            font-family: monospace;
+            font-size: 11px;
+        }
+
+        /* =====================================================================
+           SMARTWATCH HARDWARE FRAME & HAPTIC SHAKE
+           ===================================================================== */
+        .smartwatch-frame {
+            position: relative;
+            width: 400px;
+            height: 530px;
+            background: linear-gradient(145deg, #2b303a, #131720, #0a0d14);
+            border-radius: 56px;
+            box-shadow: 
+                0 35px 70px rgba(0, 0, 0, 0.75),
+                0 10px 25px rgba(0, 0, 0, 0.5),
+                inset 0 0 0 2px #3e4452,
+                inset 0 0 18px rgba(0, 0, 0, 0.9);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.15s ease, box-shadow 0.3s ease;
+        }
+
+        /* High-Intensity Haptic Shake Simulation */
+        @keyframes haptic-shake-alarm {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            15% { transform: translate(-3px, 1.5px) rotate(-0.5deg); }
+            30% { transform: translate(3px, -2px) rotate(0.5deg); }
+            45% { transform: translate(-3px, -1.5px) rotate(-0.5deg); }
+            60% { transform: translate(2.5px, 2px) rotate(0.4deg); }
+            75% { transform: translate(-2px, 1px) rotate(-0.3deg); }
+            90% { transform: translate(2px, -1px) rotate(0.2deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+
+        .smartwatch-frame.haptic-shake {
+            animation: haptic-shake-alarm 0.38s ease-in-out infinite;
+            box-shadow: 
+                0 35px 70px rgba(0, 0, 0, 0.75),
+                0 0 35px rgba(239, 68, 68, 0.4),
+                inset 0 0 0 2px #dc2626;
+        }
+
+        /* Physical Rotating Crown Button */
+        .crown-btn {
+            position: absolute;
+            right: -9px;
+            top: 155px;
+            width: 13px;
+            height: 62px;
+            background: linear-gradient(to right, #475569, #94a3b8, #475569);
+            border-radius: 0 7px 7px 0;
+            cursor: pointer;
+            box-shadow: 3px 0 8px rgba(0, 0, 0, 0.6);
+            z-index: 20;
+            transition: all 0.15s ease;
+        }
+
+        .crown-btn:hover {
+            filter: brightness(1.2);
+        }
+
+        .crown-btn:active {
+            transform: scale(0.94);
+            right: -7px;
+        }
+
+        /* Secondary Lower Button */
+        .side-btn {
+            position: absolute;
+            right: -7px;
+            top: 245px;
+            width: 10px;
+            height: 38px;
+            background: linear-gradient(to right, #334155, #64748b, #334155);
+            border-radius: 0 5px 5px 0;
+            cursor: pointer;
+            z-index: 20;
+            box-shadow: 2px 0 6px rgba(0, 0, 0, 0.5);
+            transition: all 0.15s ease;
+        }
+
+        .side-btn:active {
+            transform: scale(0.94);
+            right: -5px;
+        }
+
+        /* =====================================================================
+           WATCH SCREEN & INNER ALARM BORDER FLASH
+           ===================================================================== */
+        .watch-screen {
+            flex: 1;
+            background-color: #030712;
+            border-radius: 42px;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            box-shadow: inset 0 0 35px rgba(0, 0, 0, 0.95);
+            transition: box-shadow 0.3s ease, border-color 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        /* Critical Inner Red Border Flash */
+        @keyframes screen-border-pulse {
+            0%, 100% {
+                box-shadow: 
+                    inset 0 0 25px rgba(220, 38, 38, 0.8),
+                    inset 0 0 8px rgba(239, 68, 68, 0.9);
+                border-color: #ef4444;
+            }
+            50% {
+                box-shadow: 
+                    inset 0 0 55px rgba(239, 68, 68, 1),
+                    inset 0 0 18px rgba(254, 202, 202, 0.9);
+                border-color: #fca5a5;
+            }
+        }
+
+        .watch-screen.alert-border-flash {
+            animation: screen-border-pulse 0.75s ease-in-out infinite;
+        }
+
+        /* Top Red Emergency Flash Bar */
+        .emergency-top-bar {
+            height: 3px;
+            width: 100%;
+            background: #22c55e;
+            transition: background 0.3s ease;
+        }
+
+        .alert-active .emergency-top-bar {
+            background: #ef4444;
+            animation: top-bar-blink 0.4s ease-in-out infinite alternate;
+        }
+
+        @keyframes top-bar-blink {
+            from { opacity: 0.3; }
+            to { opacity: 1; }
+        }
+
+        /* =====================================================================
+           STATUS BAR
+           ===================================================================== */
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 18px 4px;
+            font-size: 11px;
+            color: #94a3b8;
+            letter-spacing: 0.5px;
+            z-index: 10;
+        }
+
+        .status-bar .time {
+            font-weight: 700;
+            color: #f8fafc;
+            letter-spacing: 0.8px;
+        }
+
+        .status-bar .brand-node {
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            color: #38bdf8;
+            transition: color 0.3s ease;
+        }
+
+        .alert-active .status-bar .brand-node {
+            color: #ef4444;
+        }
+
+        .status-bar .battery {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+        }
+
+        .battery-icon {
+            width: 17px;
+            height: 9px;
+            border: 1px solid #94a3b8;
+            border-radius: 2px;
+            position: relative;
+        }
+
+        .battery-icon::after {
+            content: '';
+            position: absolute;
+            right: -3px;
+            top: 2px;
+            width: 2px;
+            height: 3px;
+            background: #94a3b8;
+            border-radius: 0 1px 1px 0;
+        }
+
+        .battery-level {
+            width: 82%;
+            height: 100%;
+            background: #22c55e;
+            border-radius: 1px;
+        }
+
+        /* =====================================================================
+           SCREEN NAVIGATION SYSTEM (7 Screens)
+           ===================================================================== */
+        .screen-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+        }
+
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 8px 16px 14px;
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+            transform: translateX(25px);
+            transition: opacity 0.28s ease, transform 0.28s ease;
+            pointer-events: none;
+        }
+
+        .screen.active {
+            opacity: 1;
+            transform: translateX(0);
+            pointer-events: auto;
+        }
+
+        .screen-title {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 1.8px;
+            color: #64748b;
+            margin-bottom: 6px;
+            text-align: center;
+            font-weight: 700;
+        }
+
+        /* =====================================================================
+           SCREEN 0: HOME SCREEN (Aggressive Heartbeat Pulse)
+           ===================================================================== */
+        .home-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            height: 100%;
+            text-align: center;
+        }
+
+        .health-status-header {
+            font-size: 9px;
+            letter-spacing: 1.6px;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: #22c55e;
+            transition: color 0.3s ease;
+        }
+
+        .alert-active .health-status-header {
+            color: #ef4444;
+        }
+
+        /* Health Ring Hero with Heartbeat Keyframes */
+        .health-ring-container {
+            position: relative;
+            width: 132px;
+            height: 132px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 6px 0;
+        }
+
+        .health-ring-track {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 4px solid rgba(34, 197, 94, 0.2);
+            transition: border-color 0.3s ease;
+        }
+
+        .health-ring-fill {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 4px solid transparent;
+            border-top-color: #22c55e;
+            border-right-color: #22c55e;
+            transform: rotate(-45deg);
+            transition: border-color 0.4s ease;
+        }
+
+        /* Aggressive Heartbeat Pulse on Critical Alert */
+        @keyframes aggressive-heartbeat-ring {
+            0% {
+                transform: rotate(-45deg) scale(1);
+                filter: drop-shadow(0 0 4px rgba(239, 68, 68, 0.6));
+            }
+            15% {
+                transform: rotate(-45deg) scale(1.12);
+                filter: drop-shadow(0 0 16px rgba(239, 68, 68, 1));
+            }
+            30% {
+                transform: rotate(-45deg) scale(0.97);
+            }
+            45% {
+                transform: rotate(-45deg) scale(1.16);
+                filter: drop-shadow(0 0 24px rgba(255, 30, 30, 1));
+            }
+            65% {
+                transform: rotate(-45deg) scale(1);
+                filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.7));
+            }
+            100% {
+                transform: rotate(-45deg) scale(1);
+                filter: drop-shadow(0 0 4px rgba(239, 68, 68, 0.6));
+            }
+        }
+
+        .alert-active .health-ring-track {
+            border-color: rgba(239, 68, 68, 0.25);
+        }
+
+        .alert-active .health-ring-fill {
+            border-top-color: #ef4444;
+            border-right-color: #ef4444;
+            animation: aggressive-heartbeat-ring 0.85s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+
+        .health-ring-content {
+            z-index: 5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .health-status-text {
+            font-size: 20px;
+            font-weight: 800;
+            color: #22c55e;
+            letter-spacing: 1.5px;
+            transition: color 0.3s ease;
+        }
+
+        .health-subtext {
+            font-size: 9px;
+            color: #86efac;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 2px;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .alert-active .health-status-text {
+            color: #ef4444;
+            font-size: 15px;
+            letter-spacing: 0.8px;
+        }
+
+        .alert-active .health-subtext {
+            color: #fca5a5;
+        }
+
+        /* Mini Vitals 4-Grid */
+        .mini-vitals-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 7px;
+            width: 100%;
+        }
+
+        .mini-vital {
+            background: #111827;
+            padding: 7px 10px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .mini-vital .val-row {
+            display: flex;
+            align-items: baseline;
+            gap: 3px;
+        }
+
+        .mini-vital .value {
+            font-size: 17px;
+            font-weight: 800;
+            color: #f8fafc;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .mini-vital .unit {
+            font-size: 9px;
+            color: #94a3b8;
+            font-weight: 600;
+        }
+
+        .mini-vital .label {
+            font-size: 8.5px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 1px;
+        }
+
+        /* Failing Metric Deep-Red Shift (#4a0000) */
+        @keyframes vital-alert-flash {
+            0% {
+                background-color: #4a0000;
+                box-shadow: 0 0 6px rgba(239, 68, 68, 0.5);
+                border-color: #ef4444;
+            }
+            100% {
+                background-color: #6b0707;
+                box-shadow: 0 0 16px rgba(239, 68, 68, 0.9);
+                border-color: #fca5a5;
+            }
+        }
+
+        .mini-vital.alerting {
+            background-color: #4a0000 !important;
+            border: 1px solid #ef4444 !important;
+            animation: vital-alert-flash 0.75s ease-in-out infinite alternate;
+        }
+
+        .mini-vital.alerting .value {
+            color: #fecaca !important;
+            text-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
+        }
+
+        .mini-vital.alerting .unit,
+        .mini-vital.alerting .label {
+            color: #f87171 !important;
+            font-weight: 700;
+        }
+
+        /* Explainability Ticker Marquee */
+        .explainability-ticker {
+            width: 100%;
+            height: 20px;
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 6px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            margin: 4px 0;
+            padding: 0 4px;
+        }
+
+        .ticker-content {
+            display: inline-block;
+            white-space: nowrap;
+            font-size: 8.5px;
+            color: #94a3b8;
+            font-weight: 600;
+            letter-spacing: 0.4px;
+            transition: color 0.3s ease;
+        }
+
+        .alert-active .explainability-ticker {
+            background: rgba(74, 0, 0, 0.6);
+            border: 1px solid #ef4444;
+        }
+
+        .alert-active .ticker-content {
+            color: #fecaca;
+            animation: ticker-marquee 12s linear infinite;
+        }
+
+        @keyframes ticker-marquee {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+
+        /* =====================================================================
+           BEHAVIORAL URGENCY: EMERGENCY SOS BUTTON
+           ===================================================================== */
+        .sos-btn {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            color: #ffffff;
+            border: none;
+            border-radius: 22px;
+            padding: 11px 18px;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            width: 100%;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .sos-btn:active {
+            transform: scale(0.96);
+            background: #991b1b;
+        }
+
+        /* Urgent Alert SOS Prominence (Flash Red, Increase Size, Dominant) */
+        @keyframes sos-urgent-pulse {
+            0% {
+                background: linear-gradient(135deg, #ef4444, #b91c1c);
+                box-shadow: 0 0 10px rgba(239, 68, 68, 0.6), 0 0 0 0 rgba(239, 68, 68, 0.7);
+                transform: scale(1.02);
+            }
+            50% {
+                background: linear-gradient(135deg, #ff1744, #dc2626);
+                box-shadow: 0 0 25px rgba(255, 23, 68, 0.95), 0 0 0 8px rgba(239, 68, 68, 0);
+                transform: scale(1.05);
+            }
+            100% {
+                background: linear-gradient(135deg, #ef4444, #b91c1c);
+                box-shadow: 0 0 10px rgba(239, 68, 68, 0.6), 0 0 0 0 rgba(239, 68, 68, 0);
+                transform: scale(1.02);
+            }
+        }
+
+        .alert-active .sos-btn {
+            padding: 13px 18px;
+            font-size: 11.5px;
+            letter-spacing: 1.2px;
+            animation: sos-urgent-pulse 0.8s ease-in-out infinite;
+            border: 1px solid #fecaca;
+        }
+
+        /* =====================================================================
+           SCREEN 1: VITALS SCREEN
+           ===================================================================== */
+        .vitals-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 6px;
+        }
+
+        .vital-row {
+            background: #111827;
+            border-radius: 12px;
+            padding: 10px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .vital-row .info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .vital-row .label {
+            font-size: 8.5px;
+            color: #64748b;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .vital-row .val {
+            font-size: 18px;
+            font-weight: 800;
+            color: #f8fafc;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .vital-row .unit {
+            font-size: 10px;
+            color: #94a3b8;
+            font-weight: 500;
+            margin-left: 2px;
+        }
+
+        .vital-tag {
+            font-size: 9px;
+            padding: 4px 8px;
+            border-radius: 8px;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .tag-green { background: rgba(34, 197, 94, 0.15); color: #4ade80; }
+        .tag-blue  { background: rgba(56, 189, 248, 0.15); color: #38bdf8; }
+        .tag-amber { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+
+        /* Vitals Screen Flashing Alert Tag */
+        @keyframes tag-alert-blink {
+            from { background: #ef4444; color: #fff; box-shadow: 0 0 10px rgba(239, 68, 68, 0.8); }
+            to { background: #7f1d1d; color: #fecaca; box-shadow: 0 0 2px rgba(239, 68, 68, 0.3); }
+        }
+
+        .vital-row.alerting {
+            background: #4a0000 !important;
+            border-color: #ef4444 !important;
+        }
+
+        .vital-row.alerting .val {
+            color: #fecaca !important;
+            text-shadow: 0 0 6px rgba(239, 68, 68, 0.8);
+        }
+
+        .vital-row.alerting .vital-tag {
+            animation: tag-alert-blink 0.65s ease-in-out infinite alternate !important;
+        }
+
+        /* =====================================================================
+           SCREEN 2: BASELINE SCREEN (7-Day Rolling Profile)
+           ===================================================================== */
+        .baseline-content {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 6px;
+        }
+
+        .baseline-card {
+            background: #111827;
+            border-radius: 12px;
+            padding: 10px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .baseline-card .b-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 9px;
+            color: #64748b;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .baseline-card .b-val {
+            font-size: 16px;
+            font-weight: 800;
+            color: #f8fafc;
+            margin-top: 3px;
+        }
+
+        .baseline-card .b-dev {
+            font-size: 10px;
+            color: #4ade80;
+            font-weight: 700;
+            margin-top: 2px;
+        }
+
+        .baseline-card.alerting .b-dev {
+            color: #f87171 !important;
+        }
+
+        /* =====================================================================
+           SCREEN 3: MOTION & FALL DETECTION
+           ===================================================================== */
+        .fall-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            height: 100%;
+        }
+
+        .fall-icon {
+            font-size: 42px;
+            margin-bottom: 6px;
+        }
+
+        .fall-status {
+            font-size: 24px;
+            font-weight: 800;
+            color: #22c55e;
+            letter-spacing: 1px;
+        }
+
+        .fall-sub {
+            font-size: 10px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-top: 2px;
+        }
+
+        .motion-bar-wrap {
+            width: 100%;
+            margin-top: 18px;
+        }
+
+        .motion-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: #94a3b8;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .motion-bar {
+            width: 100%;
+            height: 6px;
+            background: #1e293b;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .motion-fill {
+            height: 100%;
+            width: 25%;
+            background: #22c55e;
+            border-radius: 3px;
+            transition: width 0.3s ease, background 0.3s ease;
+        }
+
+        /* =====================================================================
+           SCREEN 4: AIR QUALITY & GAS (MQ-45)
+           ===================================================================== */
+        .air-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+        }
+
+        .air-value {
+            font-size: 50px;
+            font-weight: 900;
+            color: #f8fafc;
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .air-label {
+            font-size: 10px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 6px;
+            font-weight: 700;
+        }
+
+        .air-badge {
+            margin-top: 14px;
+            font-size: 11px;
+            font-weight: 800;
+            padding: 5px 16px;
+            border-radius: 20px;
+            background: rgba(34, 197, 94, 0.15);
+            color: #4ade80;
+            letter-spacing: 1px;
+        }
+
+        /* =====================================================================
+           SCREEN 5: TELEMETRY & EDGE SENSORS
+           ===================================================================== */
+        .telem-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 6px;
+        }
+
+        .telem-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: #94a3b8;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-weight: 500;
+        }
+
+        .telem-row .t-val {
+            color: #f8fafc;
+            font-weight: 700;
+            font-family: monospace;
+        }
+
+        .telem-row .t-val.green { color: #4ade80; }
+        .telem-row .t-val.cyan  { color: #38bdf8; }
+
+        /* =====================================================================
+           SCREEN 6: SYSTEM STATUS & INTERACTIVE TEST TOGGLE
+           ===================================================================== */
+        .system-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            height: 100%;
+            text-align: center;
+            padding: 6px 0;
+        }
+
+        .sys-status-badge {
+            font-size: 12px;
+            font-weight: 800;
+            color: #4ade80;
+            letter-spacing: 0.8px;
+        }
+
+        .sys-list {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            width: 100%;
+            text-align: left;
+            background: #111827;
+            padding: 9px 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .sys-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 9.5px;
+            color: #64748b;
+        }
+
+        .sys-item span {
+            color: #f8fafc;
+            font-weight: 700;
+        }
+
+        /* Interactive Test Toggle Button */
+        .btn-test-alert {
+            background: linear-gradient(135deg, #1e293b, #334155);
+            color: #38bdf8;
+            border: 1px solid #475569;
+            border-radius: 16px;
+            padding: 9px 14px;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.8px;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+        }
+
+        .btn-test-alert:hover {
+            filter: brightness(1.15);
+            border-color: #38bdf8;
+        }
+
+        .btn-test-alert.active-alert {
+            background: linear-gradient(135deg, #ef4444, #991b1b);
+            color: #ffffff;
+            border-color: #fecaca;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.7);
+        }
+
+        /* Auto-Escalation Countdown Indicator */
+        .auto-escalation-tag {
+            font-size: 8px;
+            color: #f87171;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            min-height: 12px;
+        }
+
+        /* =====================================================================
+           BOTTOM NAVIGATION DOTS
+           ===================================================================== */
+        .nav-dots {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            padding: 7px 0 3px;
+            z-index: 10;
+        }
+
+        .dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: #334155;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+
+        .dot.active {
+            width: 14px;
+            border-radius: 3px;
+            background: #f8fafc;
+        }
+
+        .alert-active .dot.active {
+            background: #ef4444;
+            box-shadow: 0 0 6px #ef4444;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="workspace-wrap">
+        <!-- Smartwatch Hardware Frame -->
+        <div class="smartwatch-frame" id="smartwatchFrame">
+            <!-- Physical Rotating Crown Button -->
+            <div class="crown-btn" id="crownBtn" title="Click crown to cycle screens"></div>
+            <!-- Secondary Lower Button -->
+            <div class="side-btn" id="sideBtn" title="Toggle Emergency Alert state"></div>
+
+            <!-- Watch Screen Container -->
+            <div class="watch-screen" id="watchScreen">
+                
+                <!-- Top Emergency Flash Bar -->
+                <div class="emergency-top-bar"></div>
+
+                <!-- Status Bar -->
+                <div class="status-bar">
+                    <div class="time" id="watchTime">09:44</div>
+                    <div class="brand-node" id="statusBrandNode">● VITALSYNC EDGE</div>
+                    <div class="battery">
+                        <span>96%</span>
+                        <div class="battery-icon"><div class="battery-level"></div></div>
+                    </div>
+                </div>
+
+                <!-- Screen Carousel (7 Screens) -->
+                <div class="screen-container">
+
+                    <!-- =======================================================
+                         SCREEN 0: HOME SCREEN (Hero Health Ring & Urgent SOS)
+                         ======================================================= -->
+                    <div class="screen active" id="screen-0">
+                        <div class="home-screen">
+                            <div class="health-status-header" id="healthStatusHeader">OVERALL HEALTH STATUS</div>
+                            
+                            <!-- Pulsing Heartbeat Ring -->
+                            <div class="health-ring-container">
+                                <div class="health-ring-track" id="ringTrack"></div>
+                                <div class="health-ring-fill" id="ringFill"></div>
+                                <div class="health-ring-content">
+                                    <div class="health-status-text" id="healthStatusText">LOW</div>
+                                    <div class="health-subtext" id="healthSubtext">HEALTHY</div>
+                                </div>
+                            </div>
+
+                            <!-- Mini Vitals 4-Grid with #4a0000 Alert Shift -->
+                            <div class="mini-vitals-grid">
+                                <div class="mini-vital" id="homeCardHR">
+                                    <div class="val-row">
+                                        <span class="value" id="homeHR">74</span>
+                                        <span class="unit">BPM</span>
+                                    </div>
+                                    <span class="label">Heart Rate</span>
+                                </div>
+                                <div class="mini-vital" id="homeCardSpO2">
+                                    <div class="val-row">
+                                        <span class="value" id="homeSpO2">98</span>
+                                        <span class="unit">%</span>
+                                    </div>
+                                    <span class="label">Blood Oxygen</span>
+                                </div>
+                                <div class="mini-vital" id="homeCardTemp">
+                                    <div class="val-row">
+                                        <span class="value" id="homeTemp">36.8</span>
+                                        <span class="unit">°C</span>
+                                    </div>
+                                    <span class="label">Body Temp</span>
+                                </div>
+                                <div class="mini-vital" id="homeCardMotion">
+                                    <div class="val-row">
+                                        <span class="value" id="homeMotion">0.97</span>
+                                        <span class="unit">g</span>
+                                    </div>
+                                    <span class="label">Motion</span>
+                                </div>
+                            </div>
+
+                            <!-- Explainability Scrolling Ticker -->
+                            <div class="explainability-ticker" id="explainabilityTicker">
+                                <div class="ticker-content" id="tickerText">
+                                    ● ALL PHYSIOLOGICAL PARAMETERS WITHIN PERSONAL BASELINE NORMS
+                                </div>
+                            </div>
+
+                            <!-- Dominant Emergency SOS Button -->
+                            <button class="sos-btn" id="sosBtn">
+                                <span>🚨</span> <span id="sosBtnText">SEND EMERGENCY SOS</span>
+                            </button>
+
+                            <!-- Auto-escalation countdown message -->
+                            <div class="auto-escalation-tag" id="autoEscalationTag"></div>
+                        </div>
+                    </div>
+
+                    <!-- =======================================================
+                         SCREEN 1: VITALS SCREEN
+                         ======================================================= -->
+                    <div class="screen" id="screen-1">
+                        <div class="screen-title">Real-Time Vitals</div>
+                        <div class="vitals-list">
+                            <div class="vital-row" id="vitalRowHR">
+                                <div class="info">
+                                    <span class="label">Heart Rate</span>
+                                    <span class="val"><span id="vitalsHR">74</span> <span class="unit">BPM</span></span>
+                                </div>
+                                <span class="vital-tag tag-green" id="vitalsTagHR">Resting</span>
+                            </div>
+                            <div class="vital-row" id="vitalRowSpO2">
+                                <div class="info">
+                                    <span class="label">Blood Oxygen</span>
+                                    <span class="val"><span id="vitalsSpO2">98</span> <span class="unit">%</span></span>
+                                </div>
+                                <span class="vital-tag tag-blue" id="vitalsTagSpO2">Optimal</span>
+                            </div>
+                            <div class="vital-row" id="vitalRowTemp">
+                                <div class="info">
+                                    <span class="label">Body Temp</span>
+                                    <span class="val"><span id="vitalsTemp">36.8</span> <span class="unit">°C</span></span>
+                                </div>
+                                <span class="vital-tag tag-green" id="vitalsTagTemp">Normal</span>
+                            </div>
+                            <div class="vital-row" id="vitalRowAir">
+                                <div class="info">
+                                    <span class="label">Respiration Index</span>
+                                    <span class="val"><span id="vitalsAir">184</span> <span class="unit">idx</span></span>
+                                </div>
+                                <span class="vital-tag tag-green" id="vitalsTagAir">Safe</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- =======================================================
+                         SCREEN 2: BASELINE SCREEN (7-Day Rolling Profile)
+                         ======================================================= -->
+                    <div class="screen" id="screen-2">
+                        <div class="screen-title">Personal Baseline (7-Day)</div>
+                        <div class="baseline-content">
+                            <div class="baseline-card" id="bCardHR">
+                                <div class="b-header"><span>Resting HR Norm</span> <span>72.0 BPM</span></div>
+                                <div class="b-val" id="bValHR">74.0 BPM</div>
+                                <div class="b-dev" id="bDevHR">+2.0 BPM (+2.7% · Z: +0.4)</div>
+                            </div>
+                            <div class="baseline-card" id="bCardSpO2">
+                                <div class="b-header"><span>SpO₂ Baseline</span> <span>98.0 %</span></div>
+                                <div class="b-val" id="bValSpO2">98.0 %</div>
+                                <div class="b-dev" id="bDevSpO2">0.0% (Stable · Z: 0.0)</div>
+                            </div>
+                            <div class="baseline-card" id="bCardTemp">
+                                <div class="b-header"><span>Core Temp Norm</span> <span>36.7 °C</span></div>
+                                <div class="b-val" id="bValTemp">36.8 °C</div>
+                                <div class="b-dev" id="bDevTemp">+0.1 °C (Nominal · Z: +0.2)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- =======================================================
+                         SCREEN 3: MOTION & FALL DETECTION
+                         ======================================================= -->
+                    <div class="screen" id="screen-3">
+                        <div class="screen-title">Motion & Fall Detection</div>
+                        <div class="fall-screen">
+                            <div class="fall-icon" id="fallIcon">🏃</div>
+                            <div class="fall-status" id="fallStatus">REST</div>
+                            <div class="fall-sub">Current State</div>
+                            
+                            <div class="motion-bar-wrap">
+                                <div class="motion-meta">
+                                    <span>Motion Intensity</span>
+                                    <span id="motionVal" style="color:#f8fafc; font-weight:700;">0.97 g</span>
+                                </div>
+                                <div class="motion-bar">
+                                    <div class="motion-fill" id="motionFill"></div>
+                                </div>
+                            </div>
+                            <div id="fallAlertText" style="margin-top:16px; font-size:10px; color:#4ade80; font-weight:700;">
+                                ● ACCELERATION STABLE — NO FALL
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- =======================================================
+                         SCREEN 4: AIR QUALITY & GAS
+                         ======================================================= -->
+                    <div class="screen" id="screen-4">
+                        <div class="screen-title">Environmental Exposure</div>
+                        <div class="air-screen">
+                            <div class="air-value" id="airValue">184</div>
+                            <div class="air-label">MQ-45 Air Quality Index</div>
+                            <div class="air-badge" id="airBadge">SAFE ENVIRONMENT</div>
+                            <div style="margin-top:14px; font-size:9.5px; color:#64748b;">
+                                Optical & Electrochemical Sensor
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- =======================================================
+                         SCREEN 5: TELEMETRY
+                         ======================================================= -->
+                    <div class="screen" id="screen-5">
+                        <div class="screen-title">Telemetry Data</div>
+                        <div class="telem-list">
+                            <div class="telem-row"><span>Device ID</span> <span class="t-val">ESP32-001</span></div>
+                            <div class="telem-row"><span>Node Link</span> <span class="t-val green" id="tNodeLink">WiFi Live (1 Hz)</span></div>
+                            <div class="telem-row"><span>Roundtrip Latency</span> <span class="t-val cyan" id="tLatency">14 ms</span></div>
+                            <div class="telem-row"><span>GPS Location</span> <span class="t-val">37.7749° N, 122.4194° W</span></div>
+                            <div class="telem-row"><span>Edge Pipeline</span> <span class="t-val">FastAPI + XGBoost v1</span></div>
+                            <div class="telem-row"><span>Persistence Buffer</span> <span class="t-val" id="tBuffer">Clean (0/3 Spikes)</span></div>
+                        </div>
+                    </div>
+
+                    <!-- =======================================================
+                         SCREEN 6: SYSTEM STATUS & TEST TOGGLE
+                         ======================================================= -->
+                    <div class="screen" id="screen-6">
+                        <div class="screen-title">System Status</div>
+                        <div class="system-screen">
+                            <div class="sys-status-badge" id="sysBadge">● ALL SYSTEMS NOMINAL</div>
+                            
+                            <div class="sys-list">
+                                <div class="sys-item">Edge Gateway: <span>Online (RPi 4)</span></div>
+                                <div class="sys-item">ML Models: <span>XGBoost v1 (4 Loaded)</span></div>
+                                <div class="sys-item">Baseline Engine: <span>Active (7-Day MAD)</span></div>
+                                <div class="sys-item">Caretaker Dispatch: <span>Armed (GPS Sync)</span></div>
+                                <div class="sys-item">Database: <span>MongoDB (vitalsync)</span></div>
+                            </div>
+
+                            <!-- User Request 4: Test Alert State Trigger -->
+                            <div style="width: 100%;">
+                                <button class="btn-test-alert" id="btnTestAlert">
+                                    🚨 TEST ALERT STATE
+                                </button>
+                                <div style="font-size: 8px; color: #64748b; margin-top: 4px;">
+                                    Shortcut: Press <kbd>A</kbd> on keyboard
+                                </div>
+                            </div>
+
+                            <div style="font-size: 8.5px; color: #475569;">
+                                VITALSYNC Edge-AI v1.0.0
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Bottom Navigation Dots -->
+                <div class="nav-dots" id="navDots">
+                    <div class="dot active" data-index="0" title="Home"></div>
+                    <div class="dot" data-index="1" title="Vitals"></div>
+                    <div class="dot" data-index="2" title="Baseline"></div>
+                    <div class="dot" data-index="3" title="Motion"></div>
+                    <div class="dot" data-index="4" title="Air Quality"></div>
+                    <div class="dot" data-index="5" title="Telemetry"></div>
+                    <div class="dot" data-index="6" title="System"></div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="desktop-hint">
+            Rotate Bezel: <kbd>Click Crown</kbd> &nbsp;|&nbsp; Cycle Screen: <kbd>←</kbd> <kbd>→</kbd> &nbsp;|&nbsp; Toggle Urgent Alert: <kbd>A</kbd> or <kbd>Side Button</kbd>
+        </div>
+    </div>
+
+    <script>
+        // =====================================================================
+        // STATE MANAGEMENT
+        // =====================================================================
+        let currentScreen = 0;
+        const totalScreens = 7;
+        let isCriticalAlert = false;
+        let alertDurationSeconds = 0;
+        let alertIntervalTimer = null;
+        let hasAutoEscalated = false;
+
+        // Normal Baseline Telemetry
+        const normalVitals = {
+            hr: 74,
+            spo2: 98,
+            temp: 36.8,
+            motion: 0.97,
+            air: 184
+        };
+
+        // Critical Telemetry Values (Respiratory Distress + Tachycardia Anomaly)
+        const criticalVitals = {
+            hr: 138,     // Severe Tachycardia (+64 BPM over baseline)
+            spo2: 87,    // Severe Hypoxia (-11% drop)
+            temp: 39.4,   // High Fever / Heat-Stress
+            motion: 2.45, // Agitation / Spasmodic Tremor
+            air: 462     // Hazardous Air / Gas Exposure
+        };
+
+        // =====================================================================
+        // DOM ELEMENTS
+        // =====================================================================
+        const smartwatchFrame = document.getElementById('smartwatchFrame');
+        const watchScreen = document.getElementById('watchScreen');
+        const screens = document.querySelectorAll('.screen');
+        const dots = document.querySelectorAll('.dot');
+        const crownBtn = document.getElementById('crownBtn');
+        const sideBtn = document.getElementById('sideBtn');
+        const btnTestAlert = document.getElementById('btnTestAlert');
+        const sosBtn = document.getElementById('sosBtn');
+        const sosBtnText = document.getElementById('sosBtnText');
+        const autoEscalationTag = document.getElementById('autoEscalationTag');
+
+        // Home Elements
+        const healthStatusHeader = document.getElementById('healthStatusHeader');
+        const healthStatusText = document.getElementById('healthStatusText');
+        const healthSubtext = document.getElementById('healthSubtext');
+        const tickerText = document.getElementById('tickerText');
+        const statusBrandNode = document.getElementById('statusBrandNode');
+        
+        // Vitals Cards Elements
+        const homeCardHR = document.getElementById('homeCardHR');
+        const homeCardSpO2 = document.getElementById('homeCardSpO2');
+        const homeCardTemp = document.getElementById('homeCardTemp');
+        const homeCardMotion = document.getElementById('homeCardMotion');
+
+        const homeHR = document.getElementById('homeHR');
+        const homeSpO2 = document.getElementById('homeSpO2');
+        const homeTemp = document.getElementById('homeTemp');
+        const homeMotion = document.getElementById('homeMotion');
+
+        // Screen 1: Vitals Elements
+        const vitalRowHR = document.getElementById('vitalRowHR');
+        const vitalRowSpO2 = document.getElementById('vitalRowSpO2');
+        const vitalRowTemp = document.getElementById('vitalRowTemp');
+        const vitalRowAir = document.getElementById('vitalRowAir');
+        const vitalsHR = document.getElementById('vitalsHR');
+        const vitalsSpO2 = document.getElementById('vitalsSpO2');
+        const vitalsTemp = document.getElementById('vitalsTemp');
+        const vitalsAir = document.getElementById('vitalsAir');
+        const vitalsTagHR = document.getElementById('vitalsTagHR');
+        const vitalsTagSpO2 = document.getElementById('vitalsTagSpO2');
+        const vitalsTagTemp = document.getElementById('vitalsTagTemp');
+        const vitalsTagAir = document.getElementById('vitalsTagAir');
+
+        // Screen 2: Baseline Elements
+        const bCardHR = document.getElementById('bCardHR');
+        const bCardSpO2 = document.getElementById('bCardSpO2');
+        const bValHR = document.getElementById('bValHR');
+        const bValSpO2 = document.getElementById('bValSpO2');
+        const bValTemp = document.getElementById('bValTemp');
+        const bDevHR = document.getElementById('bDevHR');
+        const bDevSpO2 = document.getElementById('bDevSpO2');
+        const bDevTemp = document.getElementById('bDevTemp');
+
+        // Screen 3: Fall Elements
+        const fallStatus = document.getElementById('fallStatus');
+        const fallIcon = document.getElementById('fallIcon');
+        const motionVal = document.getElementById('motionVal');
+        const motionFill = document.getElementById('motionFill');
+        const fallAlertText = document.getElementById('fallAlertText');
+
+        // Screen 4: Air Quality Elements
+        const airValue = document.getElementById('airValue');
+        const airBadge = document.getElementById('airBadge');
+
+        // Screen 5 & 6 Elements
+        const tBuffer = document.getElementById('tBuffer');
+        const tLatency = document.getElementById('tLatency');
+        const sysBadge = document.getElementById('sysBadge');
+
+        // =====================================================================
+        // NAVIGATION SYSTEM
+        // =====================================================================
+        function goToScreen(index) {
+            if (index < 0 || index >= totalScreens) return;
+            
+            screens.forEach((screen, i) => {
+                screen.classList.toggle('active', i === index);
+            });
+            
+            dots.forEach((dot, i) => {
+                dot.classList.toggle('active', i === index);
+            });
+
+            currentScreen = index;
+        }
+
+        // Crown Button Navigation
+        crownBtn.addEventListener('click', () => {
+            goToScreen((currentScreen + 1) % totalScreens);
+        });
+
+        // Side Button Toggles Alert Mode
+        sideBtn.addEventListener('click', () => {
+            toggleCriticalAlert();
+        });
+
+        // Dot Navigation
+        dots.forEach(dot => {
+            dot.addEventListener('click', (e) => {
+                goToScreen(parseInt(e.target.dataset.index, 10));
+            });
+        });
+
+        // Swipe & Mouse Drag Detection
+        let touchStartX = 0;
+        let touchEndX = 0;
+        let isDragging = false;
+
+        watchScreen.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+
+        watchScreen.addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleHorizontalSwipe();
+        }, { passive: true });
+
+        watchScreen.addEventListener('mousedown', e => {
+            isDragging = true;
+            touchStartX = e.screenX;
+        });
+
+        watchScreen.addEventListener('mouseup', e => {
+            if (!isDragging) return;
+            isDragging = false;
+            touchEndX = e.screenX;
+            handleHorizontalSwipe();
+        });
+
+        function handleHorizontalSwipe() {
+            const swipeDistance = touchStartX - touchEndX;
+            if (Math.abs(swipeDistance) > 40) {
+                if (swipeDistance > 0) {
+                    goToScreen((currentScreen + 1) % totalScreens); // Swipe Left -> Next
+                } else {
+                    goToScreen((currentScreen - 1 + totalScreens) % totalScreens); // Swipe Right -> Prev
+                }
+            }
+        }
+
+        // Keyboard Shortcuts
+        window.addEventListener('keydown', e => {
+            if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                goToScreen((currentScreen + 1) % totalScreens);
+            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                goToScreen((currentScreen - 1 + totalScreens) % totalScreens);
+            } else if (e.key === 'a' || e.key === 'A') {
+                toggleCriticalAlert();
+            }
+        });
+
+        // =====================================================================
+        // ALARM & EMERGENCY ALERT SYSTEM (All User Requirements)
+        // =====================================================================
+        function toggleCriticalAlert() {
+            isCriticalAlert = !isCriticalAlert;
+            if (isCriticalAlert) {
+                activateCriticalAlert();
+            } else {
+                deactivateCriticalAlert();
+            }
+        }
+
+        btnTestAlert.addEventListener('click', toggleCriticalAlert);
+
+        function activateCriticalAlert() {
+            isCriticalAlert = true;
+            alertDurationSeconds = 0;
+            hasAutoEscalated = false;
+
+            // 1. Visual Urgency: Haptic Shake & Screen Border Flash
+            smartwatchFrame.classList.add('haptic-shake');
+            watchScreen.classList.add('alert-border-flash');
+            document.body.classList.add('alert-active');
+
+            // 2. Visual Urgency: Flashing Ring & Non-Diagnostic Directives
+            healthStatusHeader.innerText = "⚠️ CRITICAL HEALTH ALERT";
+            healthStatusText.innerText = "RESPIRATORY DISTRESS";
+            healthSubtext.innerText = "PHYSIOLOGICAL ANOMALY · ESCALATED";
+            statusBrandNode.innerText = "● EMERGENCY ALARM";
+
+            // 3. Visual Urgency: Color Shift (#4a0000 on Failing Metrics)
+            homeCardHR.classList.add('alerting');
+            homeCardSpO2.classList.add('alerting');
+            homeCardTemp.classList.add('alerting');
+
+            vitalRowHR.classList.add('alerting');
+            vitalRowSpO2.classList.add('alerting');
+            vitalRowTemp.classList.add('alerting');
+
+            bCardHR.classList.add('alerting');
+            bCardSpO2.classList.add('alerting');
+
+            // 4. Content & Messaging: Vitals Screen Tags Out of Baseline
+            vitalsTagHR.innerText = "CRITICAL";
+            vitalsTagHR.className = "vital-tag";
+            vitalsTagSpO2.innerText = "OUT OF BASELINE";
+            vitalsTagSpO2.className = "vital-tag";
+            vitalsTagTemp.innerText = "ELEVATED";
+            vitalsTagTemp.className = "vital-tag";
+
+            // 5. Behavioral Urgency: Dominant SOS Button
+            sosBtnText.innerText = "⚠️ CRITICAL: SEND SOS NOW";
+
+            // 6. Explainability Ticker Output
+            tickerText.innerText = "⚠️ EDGE-AI ESCALATION: SpO₂ dropped to 87% (-11.2% deviation) · HR tachycardia (138 BPM, +64) · Extreme heat index · Caretaker notified";
+
+            // Update System Screen Test Button
+            btnTestAlert.innerText = "✓ RESET TO NORMAL STATE";
+            btnTestAlert.classList.add('active-alert');
+            sysBadge.innerText = "⚠ EDGE ESCALATION ACTIVE";
+            sysBadge.style.color = "#ef4444";
+            tBuffer.innerText = "3/3 Multi-Spikes (Escalated)";
+            tBuffer.style.color = "#ef4444";
+
+            // Apply Critical Telemetry Values Immediately
+            applyTelemetryValues(criticalVitals);
+
+            // 7. Auto-Escalation Timer (Forced Navigation to Screen 0 after 5s)
+            clearInterval(alertIntervalTimer);
+            alertIntervalTimer = setInterval(() => {
+                alertDurationSeconds++;
+
+                if (!hasAutoEscalated && alertDurationSeconds >= 5) {
+                    hasAutoEscalated = true;
+                    // Force navigation back to Screen 0 (Home Screen)
+                    if (currentScreen !== 0) {
+                        goToScreen(0);
+                    }
+                    autoEscalationTag.innerText = "⚠️ AUTO-ESCALATED: RETURNED TO EMERGENCY HOME SCREEN";
+                    setTimeout(() => {
+                        autoEscalationTag.innerText = "";
+                    }, 4000);
+                }
+            }, 1000);
+        }
+
+        function deactivateCriticalAlert() {
+            isCriticalAlert = false;
+            alertDurationSeconds = 0;
+            hasAutoEscalated = false;
+            clearInterval(alertIntervalTimer);
+            autoEscalationTag.innerText = "";
+
+            // Remove Shake & Border Flash
+            smartwatchFrame.classList.remove('haptic-shake');
+            watchScreen.classList.remove('alert-border-flash');
+            document.body.classList.remove('alert-active');
+
+            // Reset Home Ring & Status
+            healthStatusHeader.innerText = "OVERALL HEALTH STATUS";
+            healthStatusText.innerText = "LOW";
+            healthSubtext.innerText = "HEALTHY";
+            statusBrandNode.innerText = "● VITALSYNC EDGE";
+
+            // Reset Card Backgrounds
+            homeCardHR.classList.remove('alerting');
+            homeCardSpO2.classList.remove('alerting');
+            homeCardTemp.classList.remove('alerting');
+
+            vitalRowHR.classList.remove('alerting');
+            vitalRowSpO2.classList.remove('alerting');
+            vitalRowTemp.classList.remove('alerting');
+
+            bCardHR.classList.remove('alerting');
+            bCardSpO2.classList.remove('alerting');
+
+            // Reset Tags
+            vitalsTagHR.innerText = "Resting";
+            vitalsTagHR.className = "vital-tag tag-green";
+            vitalsTagSpO2.innerText = "Optimal";
+            vitalsTagSpO2.className = "vital-tag tag-blue";
+            vitalsTagTemp.innerText = "Normal";
+            vitalsTagTemp.className = "vital-tag tag-green";
+
+            // Reset SOS Button
+            sosBtnText.innerText = "SEND EMERGENCY SOS";
+
+            // Reset Ticker
+            tickerText.innerText = "● ALL PHYSIOLOGICAL PARAMETERS WITHIN PERSONAL BASELINE NORMS";
+
+            // Reset System Screen
+            btnTestAlert.innerText = "🚨 TEST ALERT STATE";
+            btnTestAlert.classList.remove('active-alert');
+            sysBadge.innerText = "● ALL SYSTEMS NOMINAL";
+            sysBadge.style.color = "#4ade80";
+            tBuffer.innerText = "Clean (0/3 Spikes)";
+            tBuffer.style.color = "#f8fafc";
+
+            // Apply Normal Baseline Telemetry
+            applyTelemetryValues(normalVitals);
+        }
+
+        function applyTelemetryValues(data) {
+            // Home Screen
+            homeHR.innerText = data.hr;
+            homeSpO2.innerText = data.spo2;
+            homeTemp.innerText = data.temp;
+            homeMotion.innerText = data.motion;
+
+            // Vitals Screen
+            vitalsHR.innerText = data.hr;
+            vitalsSpO2.innerText = data.spo2;
+            vitalsTemp.innerText = data.temp;
+            vitalsAir.innerText = data.air;
+
+            // Baseline Screen Deviations
+            const hrDiff = (data.hr - 72).toFixed(1);
+            const spo2Diff = (data.spo2 - 98).toFixed(1);
+            const tempDiff = (data.temp - 36.7).toFixed(1);
+
+            bValHR.innerText = `${data.hr}.0 BPM`;
+            bValSpO2.innerText = `${data.spo2}.0 %`;
+            bValTemp.innerText = `${data.temp} °C`;
+
+            bDevHR.innerText = `${hrDiff > 0 ? '+' : ''}${hrDiff} BPM (${hrDiff > 10 ? 'ANOMALY · Z: +3.2' : 'Nominal · Z: +0.4'})`;
+            bDevSpO2.innerText = `${spo2Diff}% (${spo2Diff < -5 ? 'HYPOXIC DEVIATION · Z: -2.8' : 'Stable · Z: 0.0'})`;
+            bDevTemp.innerText = `${tempDiff > 0 ? '+' : ''}${tempDiff} °C (${tempDiff > 1.5 ? 'HYPERTHERMIA · Z: +3.1' : 'Nominal · Z: +0.2'})`;
+
+            // Motion & Fall Screen
+            motionVal.innerText = `${data.motion} g`;
+            motionFill.style.width = `${Math.min(data.motion * 35, 100)}%`;
+            if (data.motion > 2.0) {
+                fallStatus.innerText = "TREMOR / AGITATION";
+                fallStatus.style.color = "#ef4444";
+                fallIcon.innerText = "⚠️";
+                fallAlertText.innerText = "● HIGH ACCELERATION / AGITATION EVENT";
+                fallAlertText.style.color = "#ef4444";
+                motionFill.style.background = "#ef4444";
+            } else {
+                fallStatus.innerText = "REST";
+                fallStatus.style.color = "#22c55e";
+                fallIcon.innerText = "🏃";
+                fallAlertText.innerText = "● ACCELERATION STABLE — NO FALL";
+                fallAlertText.style.color = "#4ade80";
+                motionFill.style.background = "#22c55e";
+            }
+
+            // Air Screen
+            airValue.innerText = data.air;
+            if (data.air > 350) {
+                airBadge.innerText = "HAZARDOUS EXPOSURE";
+                airBadge.style.background = "rgba(239, 68, 68, 0.2)";
+                airBadge.style.color = "#f87171";
+            } else {
+                airBadge.innerText = "SAFE ENVIRONMENT";
+                airBadge.style.background = "rgba(34, 197, 94, 0.15)";
+                airBadge.style.color = "#4ade80";
+            }
+        }
+
+        // =====================================================================
+        // REALISTIC TELEMETRY CLOCK & LIVE JITTER SIMULATION
+        // =====================================================================
+        function updateClock() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+            document.getElementById('watchTime').innerText = timeStr;
+        }
+        updateClock();
+        setInterval(updateClock, 1000);
+
+        // Ambient Vitals Fluctuation (When NOT in Alert Mode)
+        setInterval(() => {
+            if (!isCriticalAlert) {
+                const liveData = {
+                    hr: 74 + Math.floor(Math.random() * 5) - 2,
+                    spo2: Math.min(100, Math.max(96, 98 + Math.floor(Math.random() * 3) - 1)),
+                    temp: (36.8 + (Math.random() * 0.4) - 0.2).toFixed(1),
+                    motion: (0.97 + (Math.random() * 0.08) - 0.04).toFixed(2),
+                    air: 184 + Math.floor(Math.random() * 8) - 4
+                };
+                applyTelemetryValues(liveData);
+                tLatency.innerText = `${12 + Math.floor(Math.random() * 6)} ms`;
+            }
+        }, 2000);
+
+        // =====================================================================
+        // EMERGENCY SOS BUTTON INTERACTION
+        // =====================================================================
+        sosBtn.addEventListener('click', () => {
+            const originalText = sosBtnText.innerText;
+            sosBtnText.innerText = "DISPATCHING CARETAKER SOS...";
+            sosBtn.style.background = "#7f1d1d";
+
+            setTimeout(() => {
+                sosBtnText.innerText = "✓ SOS SENT (GPS COORDINATES TRANSMITTED)";
+                sosBtn.style.background = "#22c55e";
+
+                setTimeout(() => {
+                    sosBtnText.innerText = originalText;
+                    sosBtn.style.background = "";
+                }, 3000);
+            }, 1200);
+        });
+
+        // Initialize with Normal Telemetry
+        applyTelemetryValues(normalVitals);
+    </script>
+</body>
+</html>

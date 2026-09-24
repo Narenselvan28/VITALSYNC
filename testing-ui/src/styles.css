@@ -1,5 +1,5 @@
 /* ============================================================
-   AAROGYA-SHIELD TESTING UI — DESIGN SYSTEM & COMPONENT STYLES
+   VITALSYNC TESTING UI — DESIGN SYSTEM & COMPONENT STYLES
    Optimized for Raspberry Pi 4 (No WebGL, Lightweight CSS, WCAG AA)
    ============================================================ */
 
@@ -174,6 +174,23 @@ button:focus-visible, input:focus-visible {
   color: var(--text-main);
 }
 
+.status-pill-link {
+  text-decoration: none;
+  background: #0f172a;
+  color: #38bdf8;
+  border-color: #38bdf8;
+  cursor: pointer;
+  font-weight: 700;
+  transition: all 0.15s ease;
+}
+
+.status-pill-link:hover {
+  background: #1e293b;
+  color: #7dd3fc;
+  border-color: #7dd3fc;
+  transform: translateY(-1px);
+}
+
 .pulse-dot {
   width: 8px;
   height: 8px;
@@ -270,6 +287,37 @@ button:focus-visible, input:focus-visible {
   display: flex;
   flex-direction: column;
   user-select: none;
+  transition: transform 0.15s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+@keyframes haptic-shake-alarm {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  15% { transform: translate(-3px, 1.5px) rotate(-0.5deg); }
+  30% { transform: translate(3px, -2px) rotate(0.5deg); }
+  45% { transform: translate(-3px, -1.5px) rotate(-0.5deg); }
+  60% { transform: translate(2.5px, 2px) rotate(0.4deg); }
+  75% { transform: translate(-2px, 1px) rotate(-0.3deg); }
+  90% { transform: translate(2px, -1px) rotate(0.2deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+.smartwatch.haptic-shake {
+  animation: haptic-shake-alarm 0.38s ease-in-out infinite;
+  box-shadow: var(--shadow-watch), 0 0 35px rgba(239, 68, 68, 0.45);
+  border-color: #ef4444 !important;
+}
+
+@keyframes screen-border-pulse {
+  0%, 100% {
+    box-shadow: inset 0 0 25px rgba(220, 38, 38, 0.8), inset 0 0 8px rgba(239, 68, 68, 0.9);
+  }
+  50% {
+    box-shadow: inset 0 0 55px rgba(239, 68, 68, 1), inset 0 0 18px rgba(254, 202, 202, 0.9);
+  }
+}
+
+.watch-screen.alert-border-flash {
+  animation: screen-border-pulse 0.75s ease-in-out infinite;
 }
 
 /* Metal Bezel Layer */
@@ -1150,6 +1198,138 @@ button:focus-visible, input:focus-visible {
 .lvl-elevated { background: var(--risk-elevated-bg); color: var(--risk-elevated); }
 .lvl-critical { background: var(--risk-critical-bg); color: var(--risk-critical); }
 
+/* Root Cause Analysis & Clinical Context Card */
+.root-cause-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.root-cause-header-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 700;
+  background: #ede9fe;
+  color: #6d28d9;
+  border: 1px solid #ddd6fe;
+}
+
+.clinical-qa-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.qa-item {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  font-size: 12px;
+}
+
+.qa-q {
+  font-weight: 700;
+  color: var(--text-secondary);
+  font-size: 11px;
+  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.qa-a {
+  color: var(--text-main);
+  line-height: 1.4;
+}
+
+.reasoning-summary-box {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.45;
+  margin-top: 8px;
+}
+
+.evidence-section {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--bg-inset);
+}
+
+.evidence-chips-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.chip-evidence {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+  padding: 2px 7px;
+  border-radius: 3px;
+  font-size: 11px;
+}
+
+.chip-evidence-contra {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+  padding: 2px 7px;
+  border-radius: 3px;
+  font-size: 11px;
+}
+
+/* Sensor Quality Trust Bar */
+.sensor-quality-bar {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--bg-inset);
+}
+
+@media (max-width: 600px) {
+  .sensor-quality-bar {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.sq-chip {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  text-align: center;
+  font-size: 10px;
+}
+
+.sq-chip-lbl {
+  display: block;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.sq-chip-val {
+  display: block;
+  font-weight: 700;
+}
+
+.sq-good { color: var(--risk-normal); }
+.sq-fair { color: var(--risk-early); }
+.sq-poor { color: var(--risk-critical); }
+.sq-unavail { color: var(--text-muted); }
+
 /* Why Did The Model Change? */
 .why-list {
   display: flex;
@@ -1423,3 +1603,395 @@ button:focus-visible, input:focus-visible {
   white-space: pre-wrap;
   word-break: break-all;
 }
+
+/* ============================================================
+   SOURCE TOGGLE SWITCH & REAL SENSORS HARDWARE BANNER
+   ============================================================ */
+
+.header-right-controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.source-toggle-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.source-toggle-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+}
+
+.source-toggle-switch {
+  display: inline-flex;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 2px;
+  gap: 2px;
+}
+
+.source-toggle-btn {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 3px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.source-toggle-btn:hover:not(.active) {
+  background: var(--bg-inset);
+  color: var(--text-main);
+}
+
+.source-toggle-btn.active {
+  background: #0f172a;
+  color: #ffffff;
+  border-color: #1e293b;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.source-toggle-btn.active #dot-src-real {
+  background: var(--risk-normal);
+}
+
+/* Real Sensors Hardware Banner */
+.real-sensors-banner {
+  background: #0f172a;
+  color: #f8fafc;
+  border: 1px solid #1e293b;
+  border-left: 4px solid var(--risk-normal);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.hw-banner-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.hw-banner-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #38bdf8;
+  font-size: 12px;
+}
+
+.hw-packet-rate {
+  font-size: 11px;
+  color: #94a3b8;
+  background: #1e293b;
+  padding: 2px 8px;
+  border-radius: 3px;
+}
+
+.hw-sensor-telemetry-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+@media (max-width: 768px) {
+  .hw-sensor-telemetry-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.hw-telemetry-chip {
+  background: #1e293b;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid #334155;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hw-chip-lbl {
+  font-size: 9px;
+  color: #94a3b8;
+}
+
+.hw-chip-val {
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.hw-banner-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: #94a3b8;
+  border-top: 1px solid #1e293b;
+  padding-top: 8px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.hw-banner-footer code {
+  color: #38bdf8;
+  background: #1e293b;
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+
+/* Locked Controls in Real Sensor Mode */
+.sensor-controls-section.hw-locked {
+  position: relative;
+  opacity: 0.75;
+}
+
+.sensor-controls-section.hw-locked .sensor-range {
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+.sensor-controls-section.hw-locked .sensor-num-input {
+  background: #f1f5f9;
+  cursor: not-allowed;
+}
+
+.sensor-controls-section.hw-locked .btn-preset {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* =====================================================================
+   PERSONALIZED PATIENT PROFILE & ADAPTIVE THRESHOLDS CARD (Section 1-13)
+   ===================================================================== */
+.profile-section-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.profile-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+
+.psh-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.psh-icon {
+  font-size: 18px;
+}
+
+.psh-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: 0.04em;
+  margin: 0;
+}
+
+.psh-subtitle {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.psh-meta-tags {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.badge-profile-ver {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--bg-inset);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.badge-profile-status {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.badge-profile-status.active {
+  background: #f0fdf4;
+  color: #15803d;
+  border-color: #bbf7d0;
+}
+
+.profile-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  background: var(--bg-inset);
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+@media (max-width: 900px) {
+  .profile-summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.psg-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.psg-lbl {
+  font-size: 9px;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.psg-cell strong {
+  font-size: 11px;
+  color: var(--text-main);
+}
+
+.profile-contexts-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pcb-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pcb-lbl {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  min-width: 120px;
+}
+
+.pcb-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.chip-ctx {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  text-transform: uppercase;
+}
+
+.chip-src {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: #f8fafc;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.pcb-notice {
+  font-size: 10px;
+  color: #b45309;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  padding: 5px 8px;
+  border-radius: 4px;
+}
+
+.profile-quick-switches {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+}
+
+.pqs-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+}
+
+.pqs-btn-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.btn-profile-preset {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 5px 9px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-profile-preset:hover {
+  background: var(--bg-inset);
+  color: var(--text-main);
+  border-color: #94a3b8;
+}
+
+.btn-profile-preset.active {
+  background: #0f172a;
+  color: #ffffff;
+  border-color: #0f172a;
+}
+

@@ -1,5 +1,5 @@
 /**
- * AAROGYA-SHIELD: Application Entry Point & Orchestrator
+ * VITALSYNC: Application Entry Point & Orchestrator
  * Bootstraps all controllers, live WebSocket stream,
  * and handles resilient state updates between Simulator, ML, and Smartwatch.
  */
@@ -13,13 +13,24 @@ import { CaretakerAlertController } from './caretaker.js';
 import { TimelineController } from './timeline.js';
 import { DebugPanelController } from './debug_panel.js';
 import { TestRunnerController } from './test_runner.js';
+import { ProfileController } from './profile_controller.js';
 
-class AarogyaShieldApp {
+class VitalSyncApp {
   constructor() {
+    this.lastSequenceId = -1;
     this.smartwatch = new SmartwatchController();
     this.mlPanel = new MLPanelController();
     this.timeline = new TimelineController(300);
     this.debugPanel = new DebugPanelController();
+
+    this.profile = new ProfileController(async (res) => {
+      // Profile changed: re-run simulation inference to reflect new thresholds instantly
+      try {
+        await this.simulator.executeInference();
+      } catch (e) {
+        console.warn('[App] Re-inference on profile switch failed:', e);
+      }
+    });
 
     this.caretaker = new CaretakerAlertController(() => {
       // Alert acknowledged: refresh alert and timeline
@@ -43,8 +54,9 @@ class AarogyaShieldApp {
     // 1. Initial Health & Diagnostics check
     await this.checkBackendHealth();
 
-    // 2. Fetch Initial Baseline
+    // 2. Fetch Initial Baseline & Health Profile
     await this.fetchInitialBaseline();
+    await this.profile.loadInitialProfile();
 
     // 3. Connect Live WebSocket
     wsClient.connect();
@@ -62,6 +74,14 @@ class AarogyaShieldApp {
     wsClient.onMessage((msg) => {
       if (msg.event_type === 'TELEMETRY_UPDATE') {
         this.handleUnifiedTelemetry(msg, 0);
+        if (msg.origin === 'IOT' || !msg.raw_sensors?.is_simulator) {
+          this.simulator.updateHardwareTelemetry(msg);
+        }
+      } else if (msg.event_type === 'PROFILE_UPDATED') {
+        this.profile.updateDisplay({
+          patient_profile: msg.profile,
+          active_condition_contexts: msg.active_contexts || [],
+        });
       } else if (msg.event_type === 'ALERT_ACKNOWLEDGED') {
         this.caretaker.updateDisplay(null);
       }
@@ -92,11 +112,21 @@ class AarogyaShieldApp {
   handleUnifiedTelemetry(payload, latencyMs = 0) {
     if (!payload) return;
 
+    // Reject stale updates based on monotonic sequence_id (Section 3)
+    if (payload.sequence_id !== undefined) {
+      if (payload.sequence_id <= this.lastSequenceId) {
+        console.warn(`[TestingUI] Dropping stale update seq=${payload.sequence_id} (current=${this.lastSequenceId})`);
+        return;
+      }
+      this.lastSequenceId = payload.sequence_id;
+    }
+
     // Update all UI views directly from backend payload
     this.smartwatch.updateDisplay(payload, latencyMs);
     this.mlPanel.updateDisplay(payload);
     this.caretaker.updateDisplay(payload.active_alert || payload.alert);
     this.timeline.addEntryFromPayload(payload);
+    this.profile.updateDisplay(payload);
   }
 
   async checkBackendHealth() {
@@ -171,5 +201,5 @@ class AarogyaShieldApp {
 
 // Bootstrap on DOM Content Loaded
 document.addEventListener('DOMContentLoaded', () => {
-  window.app = new AarogyaShieldApp();
+  window.app = new VitalSyncApp();
 });

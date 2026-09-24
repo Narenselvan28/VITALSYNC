@@ -1,5 +1,5 @@
 """
-AAROGYA-SHIELD: ESP32 Hardware Emulator Daemon
+VITALSYNC: ESP32 Hardware Emulator Daemon
 Simulates the physical ESP32 IoT wearable transmitting sensor packets
 via HTTP POST to /api/sensors/readings at 1 Hz.
 Used to demonstrate and test "IoT LIVE MODE" without physical hardware attached.
@@ -18,7 +18,7 @@ DEVICE_ID = "ESP32-001"
 
 def run_emulator(target_url: str = DEFAULT_URL, interval: float = 1.0, scenario: str = "normal", max_samples: int = 0):
     print("=" * 65)
-    print(f"  AAROGYA-SHIELD: ESP32 HARDWARE EMULATOR")
+    print(f"  VITALSYNC: ESP32 HARDWARE EMULATOR")
     print(f"  Device ID: {DEVICE_ID}")
     print(f"  Target Endpoint: {target_url}")
     print(f"  Transmission Frequency: {1.0 / interval:.1f} Hz (Interval: {interval}s)")
@@ -102,7 +102,7 @@ def run_emulator(target_url: str = DEFAULT_URL, interval: float = 1.0, scenario:
         time.sleep(interval)
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="ESP32 Hardware Emulator for AAROGYA-SHIELD")
+    parser = argparse.ArgumentParser(description="ESP32 Hardware Emulator for VITALSYNC")
     parser.add_argument("--url", default=DEFAULT_URL, help="Target API endpoint")
     parser.add_argument("--interval", type=float, default=1.0, help="Transmission interval in seconds")
     parser.add_argument("--scenario", choices=["normal", "respiratory", "heat_stress", "environmental", "fall"], default="normal", help="Simulation scenario")

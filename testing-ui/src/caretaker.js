@@ -1,5 +1,5 @@
 /**
- * AAROGYA-SHIELD: Caretaker Alert Controller
+ * VITALSYNC: Caretaker Alert Controller
  * Displays live caretaker notifications and handles
  * real backend acknowledgment via POST /api/alerts/{id}/acknowledge.
  */

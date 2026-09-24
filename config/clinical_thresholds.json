@@ -1,0 +1,114 @@
+{
+  "version": "1.0.0",
+  "last_reviewed": "2024-05-15",
+  "reviewed_by": "Clinical Reference Review Protocol (Non-Diagnostic Prototype)",
+  "guidelines_framework": "AAROGYA-SHIELD Multi-Modal Physiological Early-Warning System",
+  "disclaimer": "Thresholds represent clinically documented physiological reference bands from peer-reviewed literature for contextual monitoring. They do NOT constitute automated medical diagnostic criteria.",
+  
+  "profiles": {
+    "default": {
+      "heart_rate": {
+        "resting_nominal_min": { "value": 55.0, "unit": "bpm", "source": "AHA 2020 Resting Heart Rate Standards", "reference": "Circulation. 2020;142:e448-e462", "version": "1.0", "last_reviewed": "2024-05-15" },
+        "resting_nominal_max": { "value": 100.0, "unit": "bpm", "source": "AHA 2020 Resting Heart Rate Standards", "reference": "Circulation. 2020;142:e448-e462", "version": "1.0", "last_reviewed": "2024-05-15" },
+        "tachycardia_threshold": { "value": 105.0, "unit": "bpm", "source": "ACC/AHA/HRS Guidelines for Adult Tachycardia", "reference": "JACC. 2016;67(13):e27-e115", "version": "1.0", "last_reviewed": "2024-05-15" },
+        "severe_tachycardia_threshold": { "value": 140.0, "unit": "bpm", "source": "Clinical Early Warning Score (NEWS2)", "reference": "Royal College of Physicians (2017) NEWS2", "version": "1.0", "last_reviewed": "2024-05-15" },
+        "bradycardia_threshold": { "value": 50.0, "unit": "bpm", "source": "ACC/AHA/HRS Bradycardia Evaluation Guideline", "reference": "Circulation. 2019;140:e382-e482", "version": "1.0", "last_reviewed": "2024-05-15" }
+      },
+      "spo2": {
+        "optimal_min": { "value": 95.0, "unit": "%", "source": "WHO Pulse Oximetry Training Manual", "reference": "World Health Organization 2011", "version": "1.0", "last_reviewed": "2024-05-15" },
+        "mild_hypoxemia": { "value": 93.0, "unit": "%", "source": "British Thoracic Society (BTS) Oxygen Guideline", "reference": "Thorax. 2017;72(Suppl 1):ii1-ii90", "version": "1.0", "last_reviewed": "2024-05-15" },
+        "critical_hypoxemia": { "value": 88.0, "unit": "%", "source": "WHO Clinical Management / NEWS2 Guidelines", "reference": "Royal College of Physicians (2017) NEWS2", "version": "1.0", "last_reviewed": "2024-05-15" }
+      },
+      "body_temperature": {
+        "normothermia_min": { "value": 36.1, "unit": "°C", "source": "Mackowiak PA et al. Normal Body Temperature Evaluation", "reference": "JAMA. 1992;268(12):1578-1580", "version": "1.0", "last_reviewed": "2024-05-15" },
+        "normothermia_max": { "value": 37.3, "unit": "°C", "source": "Mackowiak PA et al. Normal Body Temperature Evaluation", "reference": "JAMA. 1992;268(12):1578-1580", "version": "1.0", "last_reviewed": "2024-05-15" },
+        "low_grade_pyrexia": { "value": 37.8, "unit": "°C", "source": "CDC / Infectious Diseases Society of America", "reference": "Clin Infect Dis. 2008;46(6):793-800", "version": "1.0", "last_reviewed": "2024-05-15" },
+        "hyperpyrexia": { "value": 38.8, "unit": "°C", "source": "CDC Clinical Fever Definitions", "reference": "CDC Clinical Health Advisory 2021", "version": "1.0", "last_reviewed": "2024-05-15" }
+      },
+      "activity": {
+        "rest_accel_max": { "value": 1.10, "unit": "g", "source": "Wearable Actigraphy Sedentary Cutoffs", "reference": "Gait & Posture 2018;61:322-328", "version": "1.0", "last_reviewed": "2024-05-15" },
+        "exercise_accel_min": { "value": 1.35, "unit": "g", "source": "Wearable Actigraphy Vigorous Physical Activity", "reference": "Med Sci Sports Exerc. 2019;51(12):2580-2589", "version": "1.0", "last_reviewed": "2024-05-15" }
+      }
+    },
+
+    "asthma": {
+      "spo2": {
+        "optimal_min": { "value": 95.0, "unit": "%", "source": "GINA 2023 Global Strategy for Asthma Management", "reference": "Global Initiative for Asthma (GINA) 2023", "version": "1.0", "last_reviewed": "2024-05-15" },
+        "alert_threshold": { "value": 93.0, "unit": "%", "source": "GINA 2023 Exacerbation Warning Criteria", "reference": "GINA 2023 Acute Exacerbation Pathway", "version": "1.0", "last_reviewed": "2024-05-15" },
+        "critical_threshold": { "value": 90.0, "unit": "%", "source": "BTS/SIGN British Guideline on the Management of Asthma", "reference": "Thorax. 2020;75:i1-i42", "version": "1.0", "last_reviewed": "2024-05-15" }
+      },
+      "heart_rate": {
+        "tachycardia_caution": { "value": 105.0, "unit": "bpm", "source": "Asthma Exacerbation Respiratory Effort Indicator", "reference": "Am J Respir Crit Care Med. 2020;201(9):e56-e99", "version": "1.0", "last_reviewed": "2024-05-15" }
+      },
+      "monitoring_sensitivity": {
+        "oxygenation_weight": 1.45,
+        "environmental_gas_weight": 1.35,
+        "weather_humidity_weight": 1.25,
+        "respiratory_persistence_sec": 20.0
+      }
+    },
+
+    "cardiovascular": {
+      "heart_rate": {
+        "resting_nominal_min": { "value": 55.0, "unit": "bpm", "source": "AHA/ACC Secondary Prevention in CAD", "reference": "Circulation. 2011;124:2458-2473", "version": "1.0", "last_reviewed": "2024-05-15" },
+        "resting_target_max": { "value": 85.0, "unit": "bpm", "source": "AHA/ACC Resting Heart Rate Guidelines in CAD", "reference": "JACC. 2013;61(19):e78-e140", "version": "1.0", "last_reviewed": "2024-05-15" },
+        "tachycardia_alert": { "value": 100.0, "unit": "bpm", "source": "ESC Guidelines for the Management of Heart Failure", "reference": "Eur Heart J. 2021;42(36):3599-3726", "version": "1.0", "last_reviewed": "2024-05-15" },
+        "critical_tachycardia": { "value": 130.0, "unit": "bpm", "source": "AHA/ACC Heart Failure Association Risk Scores", "reference": "Circ Heart Fail. 2020;13:e006624", "version": "1.0", "last_reviewed": "2024-05-15" },
+        "critical_bradycardia": { "value": 45.0, "unit": "bpm", "source": "ACC/AHA/HRS Bradycardia Evaluation Guideline", "reference": "Circulation. 2019;140:e382-e482", "version": "1.0", "last_reviewed": "2024-05-15" }
+      },
+      "spo2": {
+        "hypoxemia_alert": { "value": 92.0, "unit": "%", "source": "Heart Failure Acute Decompensation Indicator", "reference": "Eur Heart J Acute Cardiovasc Care. 2019;8(5):455-467", "version": "1.0", "last_reviewed": "2024-05-15" }
+      },
+      "monitoring_sensitivity": {
+        "heart_rate_weight": 1.50,
+        "hr_deviation_weight": 1.40,
+        "post_activity_recovery_weight": 1.30,
+        "cardiac_persistence_sec": 20.0
+      }
+    },
+
+    "copd": {
+      "spo2": {
+        "target_range_min": { "value": 88.0, "unit": "%", "source": "GOLD 2024 Strategy for Diagnosis and Management of COPD", "reference": "Global Initiative for Chronic Obstructive Lung Disease 2024", "version": "1.0", "last_reviewed": "2024-05-15" },
+        "target_range_max": { "value": 92.0, "unit": "%", "source": "BTS Guideline for Oxygen Use in Adults (COPD Retainers)", "reference": "Thorax. 2017;72(Suppl 1):ii1-ii90", "version": "1.0", "last_reviewed": "2024-05-15" },
+        "critical_desaturation": { "value": 85.0, "unit": "%", "source": "GOLD 2024 Acute Exacerbation Emergency Criterion", "reference": "GOLD 2024 Chapter 5", "version": "1.0", "last_reviewed": "2024-05-15" }
+      },
+      "heart_rate": {
+        "resting_nominal_max": { "value": 100.0, "unit": "bpm", "source": "COPD Resting Tachycardia Correlate", "reference": "Eur Respir J. 2016;47(4):1099-1107", "version": "1.0", "last_reviewed": "2024-05-15" }
+      },
+      "monitoring_sensitivity": {
+        "oxygenation_weight": 1.55,
+        "activity_strain_weight": 1.35,
+        "environmental_gas_weight": 1.40,
+        "respiratory_persistence_sec": 25.0
+      }
+    },
+
+    "hypertension": {
+      "heart_rate": {
+        "resting_nominal_max": { "value": 90.0, "unit": "bpm", "source": "ESH/ESC Guidelines for the Management of Arterial Hypertension", "reference": "J Hypertens. 2018;36(10):1953-2041", "version": "1.0", "last_reviewed": "2024-05-15" }
+      },
+      "monitoring_sensitivity": {
+        "cardiovascular_weight": 1.20,
+        "thermal_strain_weight": 1.25,
+        "non_diagnostic_notice": "Heart rate and SpO2 sensors cannot infer blood pressure. Use calibrated cuff for BP."
+      }
+    },
+
+    "diabetes": {
+      "monitoring_sensitivity": {
+        "thermal_strain_weight": 1.30,
+        "autonomic_hrv_caution": 1.20,
+        "non_diagnostic_notice": "Wearable vitals cannot measure blood glucose. Profile used for physiological context only."
+      }
+    },
+
+    "kidney": {
+      "monitoring_sensitivity": {
+        "thermal_strain_weight": 1.35,
+        "cardiovascular_weight": 1.25,
+        "non_diagnostic_notice": "Renal conditions alter fluid balance and thermal regulation context."
+      }
+    }
+  }
+}
