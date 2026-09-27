@@ -29,3 +29,9 @@ dist/
 # Binary installers
 *.exe
 *.deb
+
+# Large video files
+*.mp4
+*.avi
+*.mov
+*.mkv

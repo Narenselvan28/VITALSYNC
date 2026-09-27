@@ -1,9 +1,3 @@
-/**
- * VITALSYNC: Caretaker Alert Controller
- * Displays live caretaker notifications and handles
- * real backend acknowledgment via POST /api/alerts/{id}/acknowledge.
- */
-
 import { api } from './api.js';
 
 export class CaretakerAlertController {
@@ -21,14 +15,14 @@ export class CaretakerAlertController {
     this.timeEl = document.getElementById('lbl-alert-time');
     this.ackBtn = document.getElementById('btn-ack-alert');
 
-    this._bindEvents();
+    this.bindEvents();
   }
 
-  _bindEvents() {
+  bindEvents() {
     this.ackBtn?.addEventListener('click', async () => {
       if (!this.currentAlert || !this.currentAlert.alert_id) return;
       this.ackBtn.disabled = true;
-      this.ackBtn.textContent = 'ACKNOWLEDGING...';
+      this.ackBtn.textContent = 'Acknowledging...';
 
       try {
         await api.acknowledgeAlert(this.currentAlert.alert_id);
@@ -38,10 +32,10 @@ export class CaretakerAlertController {
           this.onAlertAcknowledged(this.currentAlert);
         }
       } catch (err) {
-        console.error('[Caretaker] Acknowledge error:', err);
+        console.error('Acknowledge error:', err);
       } finally {
         this.ackBtn.disabled = false;
-        this.ackBtn.textContent = '✓ ACKNOWLEDGE ALERT';
+        this.ackBtn.textContent = 'Acknowledge';
       }
     });
   }
@@ -53,28 +47,31 @@ export class CaretakerAlertController {
       this.emptyView?.classList.remove('hidden');
       this.activeView?.classList.add('hidden');
       if (this.statusBadge) {
-        this.statusBadge.textContent = 'NO ALERT';
-        this.statusBadge.className = 'alert-status-badge font-mono';
+        this.statusBadge.textContent = 'Nominal';
+        this.statusBadge.className = 'badge-tag font-mono';
       }
       return;
     }
 
-    // Active alert
     this.emptyView?.classList.add('hidden');
     this.activeView?.classList.remove('hidden');
 
     const lvl = alert.risk_level || 'EARLY_WARNING';
     if (this.statusBadge) {
-      this.statusBadge.textContent = lvl.replace('_', ' ');
-      this.statusBadge.className = 'alert-status-badge font-mono ' + (lvl === 'CRITICAL' ? 'text-red font-bold' : 'text-amber font-bold');
+      this.statusBadge.textContent = lvl === 'LOW' ? 'Nominal' : lvl.replace(/_/g, ' ');
+      this.statusBadge.className = 'badge-tag font-mono ' + (lvl === 'CRITICAL' ? 'badge-danger' : 'text-warning');
     }
 
-    if (this.headlineEl) this.headlineEl.textContent = `${lvl.replace('_', ' ')} · ${alert.risk_type || 'PHYSIOLOGICAL'}`;
-    if (this.messageEl) this.messageEl.textContent = alert.message || 'Abnormal parameter deviation.';
+    if (this.headlineEl) {
+      this.headlineEl.textContent = `${lvl.replace(/_/g, ' ')} · ${alert.risk_type || 'Physiological'}`;
+    }
+    if (this.messageEl) {
+      this.messageEl.textContent = alert.message || 'Abnormal parameter deviation.';
+    }
 
     const factors = Array.isArray(alert.contributing_parameters) && alert.contributing_parameters.length > 0
-      ? alert.contributing_parameters.join('; ')
-      : 'Multiple baseline deviations';
+      ? alert.contributing_parameters.join(', ')
+      : 'Baseline deviation';
     if (this.factorsEl) this.factorsEl.textContent = `Factors: ${factors}`;
 
     if (this.idEl) this.idEl.textContent = alert.alert_id || 'ALT-SYNC';

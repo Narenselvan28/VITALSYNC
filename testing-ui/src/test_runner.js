@@ -1,9 +1,3 @@
-/**
- * VITALSYNC: In-App Automated Test Suite Runner
- * Executes the 6 acceptance test scenarios sequentially against the real FastAPI backend.
- * Measures real latency and asserts backend response structures.
- */
-
 import { api } from './api.js';
 import { PRESETS } from './simulator.js';
 
@@ -17,10 +11,10 @@ export class TestRunnerController {
     this.summaryLabel = document.getElementById('lbl-runner-summary');
     this.runAllBtn = document.getElementById('btn-run-all-tests');
 
-    this._bindEvents();
+    this.bindEvents();
   }
 
-  _bindEvents() {
+  bindEvents() {
     this.runAllBtn?.addEventListener('click', () => {
       this.runAllScenarios();
     });
@@ -34,7 +28,7 @@ export class TestRunnerController {
     const testPlan = [
       {
         id: 1,
-        name: 'NORMAL PHYSIOLOGY',
+        name: 'Normal physiology',
         preset: PRESETS.normal,
         verify: (res) => {
           const lvl = res.escalation?.escalated_level || res.ml_predictions?.overall_health_risk?.risk_level;
@@ -43,7 +37,7 @@ export class TestRunnerController {
       },
       {
         id: 2,
-        name: 'EARLY RESPIRATORY WARNING',
+        name: 'Early respiratory warning',
         preset: PRESETS.early_resp,
         verify: (res) => {
           const respLvl = res.ml_predictions?.respiratory_risk?.risk_level;
@@ -53,7 +47,7 @@ export class TestRunnerController {
       },
       {
         id: 3,
-        name: 'HEAT STRESS EXPOSURE',
+        name: 'Heat stress exposure',
         preset: PRESETS.heat,
         verify: (res) => {
           const heatLvl = res.ml_predictions?.heat_stress_risk?.risk_level;
@@ -62,7 +56,7 @@ export class TestRunnerController {
       },
       {
         id: 4,
-        name: 'ENVIRONMENTAL GAS EXPOSURE',
+        name: 'Environmental gas exposure',
         preset: PRESETS.env,
         verify: (res) => {
           const envLvl = res.ml_predictions?.environmental_exposure_risk?.risk_level;
@@ -71,7 +65,7 @@ export class TestRunnerController {
       },
       {
         id: 5,
-        name: 'CRITICAL MULTI-PARAM + ALERT',
+        name: 'Critical multi-param alert',
         preset: PRESETS.critical,
         verify: (res) => {
           const overallLvl = res.escalation?.escalated_level || res.ml_predictions?.overall_health_risk?.risk_level;
@@ -81,7 +75,7 @@ export class TestRunnerController {
       },
       {
         id: 6,
-        name: 'PHYSIOLOGICAL RECOVERY SEQUENCE',
+        name: 'Physiological recovery',
         preset: PRESETS.recovery,
         verify: (res) => {
           const overallScore = res.ml_predictions?.overall_health_risk?.score;
@@ -94,7 +88,7 @@ export class TestRunnerController {
 
     for (const test of testPlan) {
       if (this.summaryLabel) {
-        this.summaryLabel.textContent = `RUNNING TEST ${test.id} OF ${testPlan.length}: ${test.name}...`;
+        this.summaryLabel.textContent = `Running test ${test.id} of ${testPlan.length}: ${test.name}...`;
       }
 
       this.simulator.applyValues(test.preset);
@@ -116,13 +110,12 @@ export class TestRunnerController {
           passedCount++;
           const lvl = res.escalation?.escalated_level || res.ml_predictions?.overall_health_risk?.risk_level || 'OK';
           const score = res.ml_predictions?.overall_health_risk?.score?.toFixed(2) || '0.00';
-          outcome = `Verified Level: ${lvl} (Score: ${score})`;
+          outcome = `Level: ${lvl} (${score})`;
         } else {
           status = 'FAIL';
-          outcome = 'Assertion condition not met by model response.';
+          outcome = 'Assertion condition not met.';
         }
 
-        // Notify parent app
         if (this.onTestStepComplete) {
           this.onTestStepComplete(res, latency);
         }
@@ -133,7 +126,7 @@ export class TestRunnerController {
         outcome = err.message;
       }
 
-      this._appendTestRow({
+      this.appendTestRow({
         status,
         name: test.name,
         httpCode,
@@ -141,22 +134,21 @@ export class TestRunnerController {
         outcome,
       });
 
-      // Brief delay between automated runs
-      await new Promise((r) => setTimeout(r, 250));
+      await new Promise((r) => setTimeout(r, 200));
     }
 
     if (this.summaryLabel) {
-      this.summaryLabel.textContent = `TEST RUN COMPLETED: ${passedCount}/${testPlan.length} PASSED (100% REAL BACKEND)`;
+      this.summaryLabel.textContent = `${passedCount} of ${testPlan.length} tests passed`;
     }
     if (this.runAllBtn) this.runAllBtn.disabled = false;
   }
 
-  _appendTestRow({ status, name, httpCode, latency, outcome }) {
+  appendTestRow({ status, name, httpCode, latency, outcome }) {
     if (!this.resultsBody) return;
     const tr = document.createElement('tr');
     const isPass = status === 'PASS';
     tr.innerHTML = `
-      <td><span class="${isPass ? 'badge-pass' : 'badge-fail'} font-mono">${status}</span></td>
+      <td><span class="${isPass ? 'text-success font-bold' : 'text-danger font-bold'}">${status}</span></td>
       <td><strong>${name}</strong></td>
       <td>HTTP ${httpCode}</td>
       <td>${latency} ms</td>

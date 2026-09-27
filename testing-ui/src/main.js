@@ -1,9 +1,3 @@
-/**
- * VITALSYNC: Application Entry Point & Orchestrator
- * Bootstraps all controllers, live WebSocket stream,
- * and handles resilient state updates between Simulator, ML, and Smartwatch.
- */
-
 import { api } from './api.js';
 import { wsClient } from './websocket.js';
 import { SmartwatchController } from './smartwatch.js';
@@ -23,22 +17,19 @@ class VitalSyncApp {
     this.timeline = new TimelineController(300);
     this.debugPanel = new DebugPanelController();
 
-    this.profile = new ProfileController(async (res) => {
-      // Profile changed: re-run simulation inference to reflect new thresholds instantly
+    this.profile = new ProfileController(async () => {
       try {
         await this.simulator.executeInference();
       } catch (e) {
-        console.warn('[App] Re-inference on profile switch failed:', e);
+        console.warn('Re-inference error:', e);
       }
     });
 
     this.caretaker = new CaretakerAlertController(() => {
-      // Alert acknowledged: refresh alert and timeline
       this.refreshLatestAlert();
     });
 
     this.simulator = new SimulatorController((response, latencyMs) => {
-      // Direct API response from simulator
       this.handleUnifiedTelemetry(response, latencyMs);
     });
 
@@ -46,31 +37,24 @@ class VitalSyncApp {
       this.handleUnifiedTelemetry(response, latencyMs);
     });
 
-    this._bindSystemEvents();
+    this.bindSystemEvents();
     this.init();
   }
 
   async init() {
-    // 1. Initial Health & Diagnostics check
     await this.checkBackendHealth();
-
-    // 2. Fetch Initial Baseline & Health Profile
     await this.fetchInitialBaseline();
     await this.profile.loadInitialProfile();
-
-    // 3. Connect Live WebSocket
     wsClient.connect();
 
-    // 4. Initial simulator dry run to seed initial dashboard values
     try {
       await this.simulator.executeInference();
-    } catch (e) {
-      console.warn('[App] Initial simulator inference skipped:', e.message);
+    } catch {
+      // Default initial view
     }
   }
 
-  _bindSystemEvents() {
-    // Listen for WebSocket Live Messages
+  bindSystemEvents() {
     wsClient.onMessage((msg) => {
       if (msg.event_type === 'TELEMETRY_UPDATE') {
         this.handleUnifiedTelemetry(msg, 0);
@@ -87,22 +71,19 @@ class VitalSyncApp {
       }
     });
 
-    // Listen for WebSocket Connection State
     wsClient.onStatusChange((status) => {
       const pillWs = document.getElementById('lbl-ws');
       const dotWs = document.getElementById('dot-ws');
-      if (pillWs) pillWs.textContent = status === 'CONNECTED' ? 'LIVE' : 'DISCONNECTED';
-      if (dotWs) dotWs.className = 'status-dot ' + (status === 'CONNECTED' ? 'green' : 'red');
+      if (pillWs) pillWs.textContent = status === 'CONNECTED' ? 'Live' : 'Offline';
+      if (dotWs) dotWs.className = 'dot ' + (status === 'CONNECTED' ? 'dot-success' : 'dot-danger');
       this.debugPanel.updateWsStatus(status);
     });
 
-    // Listen for API Telemetry updates (Latency, request/response JSON)
     api.onTelemetryUpdate((telemetry) => {
       this.debugPanel.updateFromTelemetry(telemetry);
-      this._setBackendOnline(telemetry.isOnline);
+      this.setBackendOnline(telemetry.isOnline);
     });
 
-    // Retry Reconnect Button
     document.getElementById('btn-reconnect')?.addEventListener('click', async () => {
       await this.checkBackendHealth();
       wsClient.connect();
@@ -112,16 +93,11 @@ class VitalSyncApp {
   handleUnifiedTelemetry(payload, latencyMs = 0) {
     if (!payload) return;
 
-    // Reject stale updates based on monotonic sequence_id (Section 3)
     if (payload.sequence_id !== undefined) {
-      if (payload.sequence_id <= this.lastSequenceId) {
-        console.warn(`[TestingUI] Dropping stale update seq=${payload.sequence_id} (current=${this.lastSequenceId})`);
-        return;
-      }
+      if (payload.sequence_id <= this.lastSequenceId) return;
       this.lastSequenceId = payload.sequence_id;
     }
 
-    // Update all UI views directly from backend payload
     this.smartwatch.updateDisplay(payload, latencyMs);
     this.mlPanel.updateDisplay(payload);
     this.caretaker.updateDisplay(payload.active_alert || payload.alert);
@@ -132,74 +108,53 @@ class VitalSyncApp {
   async checkBackendHealth() {
     try {
       const health = await api.fetchHealth();
-      this._setBackendOnline(true);
+      this.setBackendOnline(true);
 
       const mlLbl = document.getElementById('lbl-ml');
       const mlDot = document.getElementById('dot-ml');
       if (health.models_loaded) {
-        if (mlLbl) mlLbl.textContent = 'XGBOOST v1';
-        if (mlDot) mlDot.className = 'status-dot green';
+        if (mlLbl) mlLbl.textContent = 'Active';
+        if (mlDot) mlDot.className = 'dot dot-success';
       } else {
-        if (mlLbl) mlLbl.textContent = 'DEV FALLBACK';
-        if (mlDot) mlDot.className = 'status-dot amber';
+        if (mlLbl) mlLbl.textContent = 'Fallback';
+        if (mlDot) mlDot.className = 'dot dot-warning';
       }
-
-      // Check device status
-      const devStatus = await api.fetchDeviceStatus('SIM-001');
-      const espStatusEl = document.getElementById('w-sys-esp');
-      if (espStatusEl) {
-        if (devStatus.is_online) {
-          espStatusEl.textContent = '● CONNECTED';
-          espStatusEl.className = 'text-green';
-        } else {
-          espStatusEl.textContent = '○ SIMULATOR';
-          espStatusEl.className = 'text-amber';
-        }
-      }
-    } catch (err) {
-      console.warn('[App] Health check failed, backend offline:', err.message);
-      this._setBackendOnline(false);
+    } catch {
+      this.setBackendOnline(false);
     }
   }
 
   async fetchInitialBaseline() {
     try {
-      const baseline = await api.fetchBaseline('SIM-001');
-      if (baseline && baseline.statistics) {
-        this.timeline.updateBaselineSummary(baseline.statistics);
+      const data = await api.fetchBaseline('SIM-001');
+      if (data && data.statistics) {
+        this.timeline.updateBaselineSummary(data.statistics);
       }
-    } catch (err) {
-      console.warn('[App] Baseline fetch error:', err.message);
+    } catch {
+      // Nominal fallback
     }
   }
 
   async refreshLatestAlert() {
     try {
-      const alert = await api.fetchLatestAlert();
+      const alert = await api.fetchLatestAlert('SIM-001');
       this.caretaker.updateDisplay(alert);
-    } catch (err) {
-      console.warn('[App] Alert refresh error:', err.message);
+    } catch {
+      // Ignored
     }
   }
 
-  _setBackendOnline(isOnline) {
+  setBackendOnline(isOnline) {
     const banner = document.getElementById('offline-banner');
     const lblBackend = document.getElementById('lbl-backend');
     const dotBackend = document.getElementById('dot-backend');
 
-    if (banner) {
-      banner.classList.toggle('hidden', isOnline);
-    }
-    if (lblBackend) {
-      lblBackend.textContent = isOnline ? 'CONNECTED' : 'OFFLINE';
-    }
-    if (dotBackend) {
-      dotBackend.className = 'status-dot ' + (isOnline ? 'green' : 'red');
-    }
+    if (banner) banner.classList.toggle('hidden', isOnline);
+    if (lblBackend) lblBackend.textContent = isOnline ? 'Connected' : 'Offline';
+    if (dotBackend) dotBackend.className = 'dot ' + (isOnline ? 'dot-success' : 'dot-danger');
   }
 }
 
-// Bootstrap on DOM Content Loaded
 document.addEventListener('DOMContentLoaded', () => {
-  window.app = new VitalSyncApp();
+  window.vitalSyncApp = new VitalSyncApp();
 });

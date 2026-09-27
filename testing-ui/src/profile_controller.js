@@ -1,9 +1,3 @@
-/**
- * VITALSYNC: Profile Controller for Simulation Lab
- * Manages personalized patient health profile switching,
- * active condition contexts, and decision transparency.
- */
-
 import { api } from './api.js';
 
 export class ProfileController {
@@ -11,11 +5,11 @@ export class ProfileController {
     this.onProfileChanged = onProfileChanged;
     this.currentProfile = null;
 
-    this._cacheDom();
-    this._bindEvents();
+    this.cacheDom();
+    this.bindEvents();
   }
 
-  _cacheDom() {
+  cacheDom() {
     this.verEl = document.getElementById('lab-prof-ver');
     this.statusEl = document.getElementById('lab-prof-status');
     this.ageSexEl = document.getElementById('lab-prof-age-sex');
@@ -25,10 +19,10 @@ export class ProfileController {
     this.contextsEl = document.getElementById('lab-prof-contexts');
     this.sourcesEl = document.getElementById('lab-prof-decision-sources');
     this.noticeEl = document.getElementById('lab-prof-notice');
-    this.presetBtns = document.querySelectorAll('.btn-profile-preset');
+    this.presetBtns = document.querySelectorAll('.pill-group .btn-pill, .btn-profile-preset');
   }
 
-  _bindEvents() {
+  bindEvents() {
     this.presetPresets = {
       healthy: {
         age: 30,
@@ -112,7 +106,6 @@ export class ProfileController {
             ...pData
           });
 
-          // Also keep ESP32-001 in sync so user-ui watchface reflects the exact profile
           if (activeDevId !== 'ESP32-001') {
             await api.updateProfile({
               device_id: 'ESP32-001',
@@ -130,7 +123,7 @@ export class ProfileController {
             await this.onProfileChanged(res);
           }
         } catch (e) {
-          console.error('[ProfileController] Failed to switch profile:', e);
+          console.error('Profile switch error:', e);
         }
       });
     });
@@ -147,8 +140,8 @@ export class ProfileController {
           decision_sources: ['REFERENCE_THRESHOLD', 'PERSONAL_BASELINE']
         });
       }
-    } catch (e) {
-      console.warn('[ProfileController] Failed to load initial profile:', e);
+    } catch {
+      // Nominal fallback
     }
   }
 
@@ -166,8 +159,7 @@ export class ProfileController {
 
     if (this.statusEl) {
       const st = prof.baseline_status || 'LEARNING';
-      this.statusEl.textContent = st;
-      this.statusEl.className = `badge-profile-status ${st === 'LEARNING' ? '' : 'active'}`;
+      this.statusEl.textContent = st === 'LEARNING' ? 'Calibrating' : 'Active';
     }
 
     if (this.ageSexEl && prof.age) {
@@ -180,40 +172,37 @@ export class ProfileController {
 
     if (this.conditionsEl) {
       const conds = prof.conditions || ['none'];
-      this.conditionsEl.textContent = conds.map((c) => c.replace(/_/g, ' ')).join(', ') || 'No known condition';
+      this.conditionsEl.textContent = conds.map((c) => c.replace(/_/g, ' ')).join(', ') || 'Healthy';
     }
 
     if (this.medsEl) {
       const medCtx = prof.medication_context || 'UNKNOWN';
-      this.medsEl.textContent = medCtx !== 'UNKNOWN' ? `${medCtx} (Context)` : 'None reported (Context only)';
+      this.medsEl.textContent = medCtx !== 'UNKNOWN' ? medCtx : 'None';
     }
 
-    // Active Contexts
     if (this.contextsEl) {
       if (contexts.length > 0) {
         this.contextsEl.innerHTML = contexts
-          .map((ctx) => `<span class="chip-ctx">${ctx.replace(/_monitoring|_/g, ' ')}</span>`)
+          .map((ctx) => `<span class="chip-subtle">${ctx.replace(/_monitoring|_/g, ' ')}</span>`)
           .join('');
       } else {
-        this.contextsEl.innerHTML = '<span class="chip-ctx">nominal_monitoring</span>';
+        this.contextsEl.innerHTML = '<span class="chip-subtle">nominal</span>';
       }
     }
 
-    // Decision Sources
     if (this.sourcesEl) {
       if (sources.length > 0) {
         this.sourcesEl.innerHTML = sources
-          .map((src) => `<span class="chip-src">${src.replace(/_/g, ' ')}</span>`)
+          .map((src) => `<span class="chip-subtle">${src.replace(/_/g, ' ').toLowerCase()}</span>`)
           .join('');
       } else {
-        this.sourcesEl.innerHTML = '<span class="chip-src">NOMINAL TRACKING</span>';
+        this.sourcesEl.innerHTML = '<span class="chip-subtle">baseline</span>';
       }
     }
 
-    // Special notices
     if (this.noticeEl) {
       if (notices.length > 0) {
-        this.noticeEl.textContent = `ℹ️ ${notices[0]}`;
+        this.noticeEl.textContent = notices[0];
         this.noticeEl.classList.remove('hidden');
       } else {
         this.noticeEl.classList.add('hidden');

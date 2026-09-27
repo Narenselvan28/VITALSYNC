@@ -1,13 +1,3 @@
-/**
- * =============================================================================
- * VITALSYNC: Front-End Application Controller
- * Handles WebSocket telemetry streaming, personal baseline visualization,
- * dual Canvas oscilloscopes, interactive ML test lab with presets,
- * caretaker alert notifications & acknowledgments, and device diagnostics.
- * =============================================================================
- */
-
-// Application State
 const state = {
   activeView: "overview",
   connected: false,
@@ -21,21 +11,11 @@ const state = {
   debounceTimer: null,
   baselineStats: null,
   packetCount: 0,
-  selectedOverviewSignal: "hr", // hr, spo2, body_temperature, ambient_temperature, humidity, mq45, overall_risk
+  selectedOverviewSignal: "hr",
   overviewTimeRangeMinutes: 5,
   escalationStepIndex: 0,
 };
 
-// Color Tokens & State Stylings
-const COLORS = {
-  LOW: "#15803d",
-  NORMAL: "#15803d",
-  EARLY_WARNING: "#b45309",
-  ELEVATED: "#c2410c",
-  CRITICAL: "#b91c1c",
-};
-
-// Preset Scenarios
 const PRESETS = {
   normal: {
     heart_rate: 74,
@@ -150,7 +130,6 @@ const ESCALATION_CHAIN = [
   "critical"
 ];
 
-// Initialize Application on Page Load
 function boot() {
   initClock();
   initTabs();
@@ -170,7 +149,6 @@ if (document.readyState === "loading") {
   boot();
 }
 
-// --- 1. Top Real-Time Clock ---
 function initClock() {
   const clockEl = document.getElementById("top-clock");
   function updateTime() {
@@ -183,7 +161,6 @@ function initClock() {
   setInterval(updateTime, 1000);
 }
 
-// --- 2. Navigation Tabs Switcher ---
 function initTabs() {
   const navTabs = document.querySelectorAll(".nav-tab");
   const viewPanels = document.querySelectorAll(".view-panel");
@@ -192,22 +169,13 @@ function initTabs() {
     state.activeView = viewName;
 
     navTabs.forEach((tab) => {
-      if (tab.getAttribute("data-view") === viewName) {
-        tab.classList.add("active");
-      } else {
-        tab.classList.remove("active");
-      }
+      tab.classList.toggle("active", tab.getAttribute("data-view") === viewName);
     });
 
     viewPanels.forEach((panel) => {
-      if (panel.id === `view-${viewName}`) {
-        panel.classList.add("active");
-      } else {
-        panel.classList.remove("active");
-      }
+      panel.classList.toggle("active", panel.id === `view-${viewName}`);
     });
 
-    // Redraw charts if switching into Overview or Monitor
     if (viewName === "overview") {
       setTimeout(renderOverviewChart, 50);
     } else if (viewName === "monitor") {
@@ -227,43 +195,22 @@ function initTabs() {
     });
   });
 
-  // Handle URL path on first load
   const rawPath = window.location.pathname.replace("/", "");
   if (rawPath && ["overview", "monitor", "lab", "alerts", "device"].includes(rawPath)) {
     switchView(rawPath);
   }
-
-  // Recalibrate baseline buttons
-  document.getElementById("btn-recalibrate-top")?.addEventListener("click", recalibrateBaseline);
 }
 
-async function recalibrateBaseline() {
-  try {
-    const res = await fetch("/api/baseline/start", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ device_id: "ESP32-001" }),
-    });
-    if (res.ok) {
-      const stripEl = document.getElementById("strip-baseline-status");
-      if (stripEl) stripEl.innerText = "CALIBRATING (0/30 Samples)...";
-    }
-  } catch (e) {
-    console.error("Baseline recalibrate error:", e);
-  }
-}
-
-// --- 3. WebSocket Streaming Connection ---
 function initWebSocket() {
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
   const wsUrl = `${protocol}//${window.location.host}/ws/live`;
 
-  updateConnectionStatus(false, "CONNECTING");
+  updateConnectionStatus(false, "Connecting");
 
   state.ws = new WebSocket(wsUrl);
 
   state.ws.onopen = () => {
-    updateConnectionStatus(true, "LIVE");
+    updateConnectionStatus(true, "Live");
   };
 
   state.ws.onmessage = (event) => {
@@ -271,17 +218,17 @@ function initWebSocket() {
       const data = JSON.parse(event.data);
       handleIncomingTelemetry(data);
     } catch (e) {
-      console.error("[WS] Parse error:", e);
+      console.error("Telemetry parse failed:", e);
     }
   };
 
   state.ws.onclose = () => {
-    updateConnectionStatus(false, "OFFLINE");
-    setTimeout(initWebSocket, 2500); // Auto-reconnect
+    updateConnectionStatus(false, "Offline");
+    setTimeout(initWebSocket, 2500);
   };
 
-  state.ws.onerror = (err) => {
-    console.warn("[WS] Socket error:", err);
+  state.ws.onerror = () => {
+    updateConnectionStatus(false, "Offline");
   };
 }
 
@@ -295,22 +242,21 @@ function updateConnectionStatus(online, text) {
 
   if (dot) {
     dot.className = online ? "pulse-dot online-dot" : "pulse-dot";
-    dot.style.backgroundColor = online ? "var(--state-normal-dot)" : "#ef4444";
+    dot.style.backgroundColor = online ? "var(--state-normal-dot)" : "var(--state-critical-dot)";
   }
   if (txt) txt.innerText = text;
 
   if (monDot) {
     monDot.className = online ? "conn-dot dot-green" : "conn-dot dot-red";
   }
-  if (monTxt) monTxt.innerText = online ? "STREAMING" : "DISCONNECTED";
+  if (monTxt) monTxt.innerText = online ? "Live" : "Offline";
 
   if (labBackend) {
-    labBackend.innerText = online ? "CONNECTED" : "OFFLINE";
+    labBackend.innerText = online ? "Connected" : "Offline";
     labBackend.className = online ? "meta-val val-connected" : "meta-val";
   }
 }
 
-// --- 4. Ingestion & Real-Time Telemetry Dispatcher ---
 function handleIncomingTelemetry(payload) {
   if (payload.event_type === "ALERT_ACKNOWLEDGED") {
     handleAlertAcknowledged(payload);
@@ -328,22 +274,12 @@ function handleIncomingTelemetry(payload) {
   const esc = payload.escalation || {};
   const overall = ml.overall_health_risk || {};
 
-  // 1. Update Diagnostics & Node Chips
   updateDeviceDiagnostics(payload.device_status, payload.device_id, payload.timestamp);
-
-  // 2. Update View 1: Overview
   updateOverviewView(raw, feat, ml, esc, overall);
-
-  // 3. Update View 2: Live Monitor
   updateMonitorView(raw, feat, ml, esc, overall, payload.active_alert);
-
-  // 4. Update View 3: Test Lab Outputs
   updateTestLabOutputs(raw, feat, ml, esc, overall);
-
-  // 5. Update Caretaker Emergency Banner & Alert widgets
   updateAlertComponents(payload.active_alert);
 
-  // 6. Record Trend History & Render Oscilloscopes
   recordTrendDataPoint(raw, feat, overall);
   renderOverviewChart();
   renderMonitorWaveforms();
@@ -374,44 +310,34 @@ function updateDeviceDiagnostics(deviceStatus, deviceId, timestamp) {
     monEspDot.className = isOnline ? "conn-dot dot-green" : "conn-dot dot-yellow";
   }
   if (monEspStatus) {
-    monEspStatus.innerText = isOnline ? "CONNECTED" : "STANDBY";
+    monEspStatus.innerText = isOnline ? "Connected" : "Standby";
   }
   if (devEsp32) {
-    devEsp32.innerText = isOnline ? "ONLINE" : "STANDBY";
+    devEsp32.innerText = isOnline ? "Online" : "Standby";
     devEsp32.className = isOnline ? "diag-badge badge-green" : "diag-badge badge-yellow";
   }
 }
 
-// --- 5. DOM View Updaters ---
-
-// === VIEW 1: OVERVIEW ===
 function updateOverviewView(raw, feat, ml, esc, overall) {
   const score = overall.score !== undefined ? overall.score : 0.10;
   const level = esc.escalated_level || overall.risk_level || "LOW";
-  const confidence = overall.confidence !== undefined ? Math.round(overall.confidence * 100) : 94;
 
-  // Hero Status
   const scoreEl = document.getElementById("ov-risk-score");
   if (scoreEl) scoreEl.innerText = score.toFixed(2);
 
-  const confEl = document.getElementById("ov-confidence");
-  if (confEl) confEl.innerText = `Model Confidence: ${confidence}%`;
-
   const badgeEl = document.getElementById("ov-status-badge");
   if (badgeEl) {
-    const displayLevel = level === "LOW" ? "NORMAL" : level.replace("_", " ");
+    const displayLevel = level === "LOW" ? "Normal" : level.charAt(0).toUpperCase() + level.slice(1).toLowerCase().replace("_", " ");
     badgeEl.innerText = displayLevel;
     badgeEl.className = `status-badge-lg badge-${level.toLowerCase().replace("_", "-")}`;
   }
 
-  // Linear spectrum fill
   const specFill = document.getElementById("ov-spectrum-fill");
   if (specFill) {
     const pct = Math.min(100, Math.max(5, score * 100));
     specFill.style.width = `${pct}%`;
   }
 
-  // Risk Trend Arrow
   const trendArrow = document.getElementById("ov-trend-arrow");
   const trendText = document.getElementById("ov-trend-text");
   if (trendArrow && trendText) {
@@ -420,36 +346,35 @@ function updateOverviewView(raw, feat, ml, esc, overall) {
       trendText.innerText = "Deteriorating";
     } else if (score > 0.3) {
       trendArrow.innerText = "↗";
-      trendText.innerText = "Elevating";
+      trendText.innerText = "Elevated";
     } else {
       trendArrow.innerText = "→";
       trendText.innerText = "Stable";
     }
   }
 
-  // Physiological Metrics Strip
   const hr = Math.round(raw.heart_rate || 74);
   const spo2 = Math.round(raw.spo2 || 98);
   const temp = (raw.body_temperature || 36.7).toFixed(1);
-  const act = feat.activity_level || feat.activity_label || "REST";
+  const act = feat.activity_level !== undefined ? ["Rest", "Light", "Moderate", "Vigorous", "Fall"][feat.activity_level] || "Rest" : "Rest";
   const mag = (feat.acceleration_magnitude || 0.98).toFixed(2);
 
   const ovHr = document.getElementById("ov-hr-val");
   if (ovHr) ovHr.innerText = hr;
-  const hrDevPct = feat.hr_deviation !== undefined ? (feat.hr_deviation * 100).toFixed(1) : "0.0";
+  const hrDevPct = feat.hr_deviation !== undefined ? Math.round(feat.hr_deviation * 100) : 0;
   const ovHrDev = document.getElementById("ov-hr-dev");
   if (ovHrDev) {
-    const arrow = hrDevPct > 1.5 ? "↑" : hrDevPct < -1.5 ? "↓" : "→";
-    ovHrDev.innerHTML = `<span class="meta-trend">${arrow}</span> ${hrDevPct >= 0 ? "+" : ""}${hrDevPct}% from baseline`;
+    const arrow = hrDevPct > 3 ? "↑" : hrDevPct < -3 ? "↓" : "→";
+    ovHrDev.innerHTML = `<span class="meta-trend">${arrow}</span> ${hrDevPct === 0 ? "Normal" : `${hrDevPct > 0 ? "+" : ""}${hrDevPct}% from baseline`}`;
   }
 
   const ovSpo2 = document.getElementById("ov-spo2-val");
   if (ovSpo2) ovSpo2.innerText = spo2;
-  const spo2DevPct = feat.spo2_deviation !== undefined ? (feat.spo2_deviation * 100).toFixed(1) : "0.0";
+  const spo2DevPct = feat.spo2_deviation !== undefined ? Math.round(feat.spo2_deviation * 100) : 0;
   const ovSpo2Dev = document.getElementById("ov-spo2-dev");
   if (ovSpo2Dev) {
-    const arrow = spo2DevPct < -1.5 ? "↓" : spo2DevPct > 1.5 ? "↑" : "→";
-    ovSpo2Dev.innerHTML = `<span class="meta-trend">${arrow}</span> ${spo2DevPct >= 0 ? "+" : ""}${spo2DevPct}% from baseline`;
+    const arrow = spo2DevPct < -2 ? "↓" : "→";
+    ovSpo2Dev.innerHTML = `<span class="meta-trend">${arrow}</span> ${spo2DevPct === 0 ? "Normal" : `${spo2DevPct}% from baseline`}`;
   }
 
   const ovTemp = document.getElementById("ov-temp-val");
@@ -458,7 +383,7 @@ function updateOverviewView(raw, feat, ml, esc, overall) {
   const ovTempDev = document.getElementById("ov-temp-dev");
   if (ovTempDev) {
     const arrow = tempDevVal > 0.4 ? "↑" : tempDevVal < -0.4 ? "↓" : "→";
-    ovTempDev.innerHTML = `<span class="meta-trend">${arrow}</span> ${tempDevVal >= 0 ? "+" : ""}${tempDevVal}°C from baseline`;
+    ovTempDev.innerHTML = `<span class="meta-trend">${arrow}</span> ${tempDevVal == 0 ? "Normal" : `${tempDevVal > 0 ? "+" : ""}${tempDevVal}°C`}`;
   }
 
   const ovAct = document.getElementById("ov-act-val");
@@ -466,7 +391,6 @@ function updateOverviewView(raw, feat, ml, esc, overall) {
   const ovActMag = document.getElementById("ov-act-mag");
   if (ovActMag) ovActMag.innerText = `${mag}g`;
 
-  // Environmental Metrics Strip
   const amb = (raw.ambient_temperature || 28.0).toFixed(1);
   const hum = Math.round(raw.humidity || 60);
   const mq = Math.round(raw.mq45 || 180);
@@ -477,7 +401,7 @@ function updateOverviewView(raw, feat, ml, esc, overall) {
   const ovHum = document.getElementById("ov-hum-val");
   if (ovHum) ovHum.innerText = hum;
   const ovHeatIdx = document.getElementById("ov-heat-idx");
-  if (ovHeatIdx) ovHeatIdx.innerText = `Heat Index: ${hi}°C`;
+  if (ovHeatIdx) ovHeatIdx.innerText = `Heat index: ${hi}°C`;
 
   const ovMq = document.getElementById("ov-mq-val");
   if (ovMq) ovMq.innerText = mq;
@@ -485,25 +409,24 @@ function updateOverviewView(raw, feat, ml, esc, overall) {
   const ovMqDesc = document.getElementById("ov-mq-desc");
   if (ovMqBadge) {
     if (mq > 650) {
-      ovMqBadge.innerText = "CRITICAL";
+      ovMqBadge.innerText = "Critical";
       ovMqBadge.className = "status-chip chip-critical font-mono";
-      if (ovMqDesc) ovMqDesc.innerText = "Severe environmental exposure";
+      if (ovMqDesc) ovMqDesc.innerText = "Severe atmospheric exposure";
     } else if (mq > 400) {
-      ovMqBadge.innerText = "ELEVATED";
+      ovMqBadge.innerText = "Elevated";
       ovMqBadge.className = "status-chip chip-elevated font-mono";
       if (ovMqDesc) ovMqDesc.innerText = "Elevated exposure detected";
     } else if (mq > 250) {
-      ovMqBadge.innerText = "WARNING";
+      ovMqBadge.innerText = "Warning";
       ovMqBadge.className = "status-chip chip-warning font-mono";
-      if (ovMqDesc) ovMqDesc.innerText = "Mild atmospheric elevation";
+      if (ovMqDesc) ovMqDesc.innerText = "Mild elevation";
     } else {
-      ovMqBadge.innerText = "NORMAL";
+      ovMqBadge.innerText = "Normal";
       ovMqBadge.className = "status-chip chip-normal font-mono";
-      if (ovMqDesc) ovMqDesc.innerText = "Atmospheric baseline (uncalibrated exposure indicator)";
+      if (ovMqDesc) ovMqDesc.innerText = "Atmospheric baseline";
     }
   }
 
-  // Risk Matrix Rows in Overview
   updateMatrixRow("resp", ml.respiratory_risk);
   updateMatrixRow("oxy", ml.oxygenation_anomaly);
   updateMatrixRow("heat", ml.heat_stress_risk);
@@ -511,7 +434,6 @@ function updateOverviewView(raw, feat, ml, esc, overall) {
   updateMatrixRow("env", ml.environmental_exposure_risk);
   updateMatrixRow("gen", ml.general_health_anomaly);
 
-  // Early Warning Timeline Item
   updateTimeline(level, esc);
 }
 
@@ -524,7 +446,7 @@ function updateMatrixRow(prefix, modelData) {
   if (scoreEl) scoreEl.innerText = (modelData.score || 0.10).toFixed(2);
   if (badgeEl) {
     const lvl = modelData.risk_level || "LOW";
-    badgeEl.innerText = lvl === "LOW" ? "NORMAL" : lvl.replace("_", " ");
+    badgeEl.innerText = lvl === "LOW" ? "Normal" : lvl.charAt(0).toUpperCase() + lvl.slice(1).toLowerCase().replace("_", " ");
     badgeEl.className = `status-chip chip-${lvl.toLowerCase().replace("_", "-")} font-mono`;
   }
   if (trendEl) {
@@ -536,7 +458,7 @@ function updateTimeline(level, esc) {
   const container = document.getElementById("overview-timeline-list");
   if (!container) return;
 
-  const displayLevel = level === "LOW" ? "NORMAL" : level.replace("_", " ");
+  const displayLevel = level === "LOW" ? "Normal" : level.charAt(0).toUpperCase() + level.slice(1).toLowerCase().replace("_", " ");
   const bulletClass = `mark-${level.toLowerCase().replace("_", "-")}`;
   const reasonsText = (esc.reasons && esc.reasons.length > 0)
     ? esc.reasons.join(". ")
@@ -546,7 +468,7 @@ function updateTimeline(level, esc) {
     <div class="timeline-item">
       <div class="timeline-bullet ${bulletClass}"></div>
       <div class="timeline-content">
-        <div class="timeline-time font-mono">Live (${new Date().toLocaleTimeString()})</div>
+        <div class="timeline-time font-mono">Live · ${new Date().toLocaleTimeString()}</div>
         <div class="timeline-title">${displayLevel}</div>
         <div class="timeline-desc">${reasonsText}</div>
       </div>
@@ -554,9 +476,7 @@ function updateTimeline(level, esc) {
   `;
 }
 
-// === VIEW 2: LIVE MONITOR ===
 function updateMonitorView(raw, feat, ml, esc, overall, activeAlert) {
-  // Raw Sensor Readout Stack
   const setEl = (id, text) => {
     const el = document.getElementById(id);
     if (el) el.innerText = text;
@@ -576,14 +496,13 @@ function updateMonitorView(raw, feat, ml, esc, overall, activeAlert) {
   const az = (raw.accel_z || 0.98).toFixed(2);
   setEl("mon-accel", `${ax >= 0 ? "+" : ""}${ax}, ${ay >= 0 ? "+" : ""}${ay}, ${az >= 0 ? "+" : ""}${az}`);
   setEl("mon-mag", `${(feat.acceleration_magnitude || 0.98).toFixed(2)}g`);
-  setEl("mon-act", feat.activity_level || feat.activity_label || "REST");
+  setEl("mon-act", feat.activity_level !== undefined ? ["Rest", "Light", "Moderate", "Vigorous", "Fall"][feat.activity_level] || "Rest" : "Rest");
   setEl("mon-gps", `${(raw.latitude || 10.662).toFixed(3)}, ${(raw.longitude || 76.891).toFixed(3)}`);
 
-  // Evaluated State Badge & Score
   const level = esc.escalated_level || overall.risk_level || "LOW";
   const monBadge = document.getElementById("mon-risk-badge-text");
   if (monBadge) {
-    const displayLevel = level === "LOW" ? "NORMAL" : level.replace("_", " ");
+    const displayLevel = level === "LOW" ? "Normal" : level.charAt(0).toUpperCase() + level.slice(1).toLowerCase().replace("_", " ");
     monBadge.innerText = displayLevel;
     monBadge.className = `status-${level.toLowerCase().replace("_", "-")}`;
   }
@@ -591,50 +510,46 @@ function updateMonitorView(raw, feat, ml, esc, overall, activeAlert) {
   setEl("mon-risk-score", (overall.score || 0.10).toFixed(2));
   const monTrend = document.getElementById("mon-risk-trend");
   if (monTrend) {
-    monTrend.innerText = (overall.score || 0) > 0.6 ? "↑ High Anomaly" : (overall.score || 0) > 0.3 ? "↗ Elevating" : "→ Stable";
+    monTrend.innerText = (overall.score || 0) > 0.6 ? "↑ High anomaly" : (overall.score || 0) > 0.3 ? "↗ Elevated" : "→ Stable";
   }
 
-  // Caretaker Alert Box in Live Monitor
   const alertDetail = document.getElementById("mon-alert-detail");
   if (alertDetail) {
     if (activeAlert && !activeAlert.acknowledged) {
       alertDetail.innerHTML = `
-        <span style="color:var(--state-critical-dot); font-weight:700;">[${activeAlert.risk_level}] ${activeAlert.risk_type}</span><br>
-        <span>${activeAlert.message}</span><br>
-        <span class="text-muted">ID: ${activeAlert.alert_id} | Location: ${activeAlert.latitude || 10.662}°, ${activeAlert.longitude || 76.891}°</span>
+        <span style="color:var(--state-critical-dot); font-weight:600;">[${activeAlert.risk_level}] ${activeAlert.risk_type}</span><br>
+        <span>${activeAlert.message}</span>
       `;
     } else {
       alertDetail.innerHTML = `<span>No active alerts. System nominal.</span>`;
     }
   }
 
-  // Reasoning & Contributing Factors Grid
   const reasonGrid = document.getElementById("monitor-reasoning-grid");
   if (reasonGrid) {
     const reasons = (esc.reasons && esc.reasons.length > 0)
       ? esc.reasons
-      : (overall.contributing_features?.top_drivers || ["All parameters tracking within individual personal baseline."]);
+      : (overall.contributing_features?.top_drivers || ["All parameters tracking within baseline norms."]);
 
     reasonGrid.innerHTML = reasons.map((r) => `
       <div class="reason-card">
         <span class="reason-score font-mono">+${((overall.score || 0.1) * 0.4).toFixed(2)}</span>
         <div class="reason-text">
           <strong>${r}</strong>
-          <span>Attributed via personal baseline standard deviation & trend tracking.</span>
+          <span>Statistical divergence from personal reference window.</span>
         </div>
       </div>
     `).join("");
   }
 }
 
-// === VIEW 3: TEST LAB OUTPUTS ===
 function updateTestLabOutputs(raw, feat, ml, esc, overall) {
   const level = esc.escalated_level || overall.risk_level || "LOW";
   const score = overall.score !== undefined ? overall.score : 0.10;
 
   const labBadge = document.getElementById("lab-overall-badge");
   if (labBadge) {
-    const displayLevel = level === "LOW" ? "NORMAL" : level.replace("_", " ");
+    const displayLevel = level === "LOW" ? "Normal" : level.charAt(0).toUpperCase() + level.slice(1).toLowerCase().replace("_", " ");
     labBadge.innerText = displayLevel;
     labBadge.className = `status-badge-lg badge-${level.toLowerCase().replace("_", "-")}`;
   }
@@ -647,7 +562,6 @@ function updateTestLabOutputs(raw, feat, ml, esc, overall) {
     labTrend.innerText = score > 0.5 ? "↑ Escalating" : score > 0.25 ? "↗ Elevated" : "→ Stable";
   }
 
-  // Table of 6 Models
   const updateLabModelRow = (prefix, data) => {
     if (!data) return;
     const sEl = document.getElementById(`lab-m-${prefix}-score`);
@@ -655,7 +569,7 @@ function updateTestLabOutputs(raw, feat, ml, esc, overall) {
     if (sEl) sEl.innerText = (data.score || 0.10).toFixed(2);
     if (bEl) {
       const lvl = data.risk_level || "LOW";
-      bEl.innerText = lvl === "LOW" ? "NORMAL" : lvl.replace("_", " ");
+      bEl.innerText = lvl === "LOW" ? "Normal" : lvl.charAt(0).toUpperCase() + lvl.slice(1).toLowerCase().replace("_", " ");
       bEl.className = `status-chip chip-${lvl.toLowerCase().replace("_", "-")} font-mono`;
     }
   };
@@ -667,25 +581,23 @@ function updateTestLabOutputs(raw, feat, ml, esc, overall) {
   updateLabModelRow("fatigue", ml.fatigue_strain_risk);
   updateLabModelRow("env", ml.environmental_exposure_risk);
 
-  // Section 4: Why did the model change?
   const whyList = document.getElementById("lab-why-list");
   if (whyList) {
     const reasons = (esc.reasons && esc.reasons.length > 0)
       ? esc.reasons
-      : (overall.contributing_features?.top_drivers || ["All parameters within personal baseline"]);
+      : (overall.contributing_features?.top_drivers || ["All parameters within baseline"]);
 
     whyList.innerHTML = reasons.map((r, i) => `
       <div class="why-item font-mono">
         <span class="why-impact">+${(0.05 + i * 0.04).toFixed(2)}</span>
         <div class="why-content">
           <strong>${r}</strong>
-          <span class="why-detail">Telemetry deviation filtered through multi-parameter confirmation engine</span>
+          <span class="why-detail">Telemetry deviation confirmed across consecutive samples</span>
         </div>
       </div>
     `).join("");
   }
 
-  // Section 5: Personal Baseline Comparison Table
   const baseHr = feat.baseline_summary?.heart_rate?.baseline_mean || 72.0;
   const baseSpo2 = feat.baseline_summary?.spo2?.baseline_mean || 98.0;
   const baseTemp = feat.baseline_summary?.body_temperature?.baseline_mean || 36.7;
@@ -695,14 +607,14 @@ function updateTestLabOutputs(raw, feat, ml, esc, overall) {
     if (el) el.innerText = val;
   };
 
-  setT("lb-base-hr", `${baseHr.toFixed(1)} BPM`);
+  setT("lb-base-hr", `${Math.round(baseHr)} BPM`);
   setT("lb-curr-hr", `${Math.round(raw.heart_rate || 74)} BPM`);
-  const hrDev = feat.hr_deviation !== undefined ? (feat.hr_deviation * 100).toFixed(1) : "0.0";
+  const hrDev = feat.hr_deviation !== undefined ? Math.round(feat.hr_deviation * 100) : 0;
   setT("lb-dev-hr", `${hrDev >= 0 ? "+" : ""}${hrDev}%`);
 
-  setT("lb-base-spo2", `${baseSpo2.toFixed(1)}%`);
+  setT("lb-base-spo2", `${Math.round(baseSpo2)}%`);
   setT("lb-curr-spo2", `${Math.round(raw.spo2 || 98)}%`);
-  const spo2Dev = feat.spo2_deviation !== undefined ? (feat.spo2_deviation * 100).toFixed(1) : "0.0";
+  const spo2Dev = feat.spo2_deviation !== undefined ? Math.round(feat.spo2_deviation * 100) : 0;
   setT("lb-dev-spo2", `${spo2Dev >= 0 ? "+" : ""}${spo2Dev}%`);
 
   setT("lb-base-temp", `${baseTemp.toFixed(1)}°C`);
@@ -714,10 +626,9 @@ function updateTestLabOutputs(raw, feat, ml, esc, overall) {
   setT("lb-curr-hum", `${Math.round(raw.humidity || 60)}%`);
 
   const infStatus = document.getElementById("lab-inference-status");
-  if (infStatus) infStatus.innerText = "Inference active (Live)";
+  if (infStatus) infStatus.innerText = "Inference active";
 }
 
-// === CARETAKER BANNER & IN-PAGE ALERT WIDGET ===
 function updateAlertComponents(activeAlert) {
   state.activeAlert = activeAlert;
 
@@ -725,7 +636,6 @@ function updateAlertComponents(activeAlert) {
   const inPageWidget = document.getElementById("caretaker-widget-content");
 
   if (activeAlert && !activeAlert.acknowledged) {
-    // Show Top Emergency Banner
     if (banner) {
       banner.classList.remove("hidden");
       const sev = document.getElementById("banner-severity");
@@ -743,11 +653,10 @@ function updateAlertComponents(activeAlert) {
 
       const reasonsEl = document.getElementById("banner-reasons");
       if (reasonsEl && activeAlert.contributing_parameters) {
-        reasonsEl.innerText = `Contributing indicators: ${activeAlert.contributing_parameters.join(", ")}`;
+        reasonsEl.innerText = `Contributing parameters: ${activeAlert.contributing_parameters.join(", ")}`;
       }
     }
 
-    // In-page widget in Overview
     if (inPageWidget) {
       inPageWidget.innerHTML = `
         <div class="active-alert-box font-mono">
@@ -760,29 +669,25 @@ function updateAlertComponents(activeAlert) {
             <p>${activeAlert.message}</p>
             <div class="aab-meta">
               <span>GPS: ${activeAlert.latitude || 10.662}° N, ${activeAlert.longitude || 76.891}° E</span>
-              <button class="btn-ack" onclick="acknowledgeAlert('${activeAlert.alert_id}')">Acknowledge Alert</button>
+              <button class="btn-ack" onclick="acknowledgeAlert('${activeAlert.alert_id}')">Acknowledge</button>
             </div>
           </div>
         </div>
       `;
     }
   } else {
-    // Hide Banner
     if (banner) banner.classList.add("hidden");
 
-    // In-page widget nominal
     if (inPageWidget) {
       inPageWidget.innerHTML = `
         <div class="no-alerts-placeholder font-mono">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>
           <span>No active alerts. System nominal.</span>
         </div>
       `;
     }
   }
 }
-
-// --- 6. Caretaker Alert Actions & History Management ---
 
 function initCaretakerBanner() {
   document.getElementById("btn-banner-ack")?.addEventListener("click", () => {
@@ -806,7 +711,7 @@ async function acknowledgeAlert(alertId) {
     console.error("Alert acknowledgment failed:", e);
   }
 }
-window.acknowledgeAlert = acknowledgeAlert; // Expose for inline buttons
+window.acknowledgeAlert = acknowledgeAlert;
 
 function handleAlertAcknowledged(data) {
   if (state.activeAlert && state.activeAlert.alert_id === data.alert_id) {
@@ -857,7 +762,6 @@ function updateAlertCounts() {
   setC("count-acked", acked);
   setC("count-crit", crit);
 
-  // Top Nav Badge
   const navBadge = document.getElementById("nav-alerts-badge");
   if (navBadge) {
     if (active > 0) {
@@ -891,10 +795,10 @@ function renderAlertsTable() {
     const time = a.timestamp ? new Date(a.timestamp).toLocaleTimeString() : "--";
     const lvl = a.risk_level || "EARLY_WARNING";
     const badgeClass = `chip-${lvl.toLowerCase().replace("_", "-")}`;
-    const statusText = a.acknowledged ? "ACKNOWLEDGED" : "ACTIVE";
+    const statusText = a.acknowledged ? "Acknowledged" : "Active";
     const statusClass = a.acknowledged ? "chip-normal" : "chip-critical";
     const actionHtml = a.acknowledged
-      ? `<span class="text-muted font-mono" style="font-size:0.75rem;">Done</span>`
+      ? `<span class="text-muted font-mono" style="font-size:12px;">Done</span>`
       : `<button class="btn-subtle-sm" onclick="acknowledgeAlert('${a.alert_id}')">Acknowledge</button>`;
 
     return `
@@ -910,8 +814,6 @@ function renderAlertsTable() {
     `;
   }).join("");
 }
-
-// --- 7. Test Lab: Interactive Controls, Presets & Simulation ---
 
 function initTestLabControls() {
   const controls = [
@@ -940,7 +842,6 @@ function initTestLabControls() {
     });
   });
 
-  // Step +/- buttons
   document.querySelectorAll(".btn-step").forEach((btn) => {
     btn.addEventListener("click", () => {
       const targetId = btn.getAttribute("data-target");
@@ -959,34 +860,32 @@ function initTestLabControls() {
     });
   });
 
-  // Physical Activity Dropdown
   const actSelect = document.getElementById("ctrl-activity-select");
   const actChip = document.getElementById("ctrl-activity-chip");
   if (actSelect) {
     actSelect.addEventListener("change", () => {
       const val = parseInt(actSelect.value, 10);
-      const labels = ["REST", "LIGHT", "MODERATE", "HIGH", "FALL_CANDIDATE"];
-      if (actChip) actChip.innerText = labels[val] || "REST";
+      const labels = ["Rest", "Light", "Moderate", "Vigorous", "Fall candidate"];
+      if (actChip) actChip.innerText = labels[val] || "Rest";
 
-      // Auto update acceleration vectors roughly corresponding to activity
       const axEl = document.getElementById("ctrl-ax");
       const ayEl = document.getElementById("ctrl-ay");
       const azEl = document.getElementById("ctrl-az");
       const magLabel = document.getElementById("ctrl-accel-mag-label");
 
-      if (val === 4) { // FALL_CANDIDATE
+      if (val === 4) {
         if (axEl) axEl.value = 2.40;
         if (ayEl) ayEl.value = 2.10;
         if (azEl) azEl.value = 0.30;
-      } else if (val === 3) { // HIGH
+      } else if (val === 3) {
         if (axEl) axEl.value = 0.65;
         if (ayEl) ayEl.value = 0.55;
         if (azEl) azEl.value = 1.35;
-      } else if (val === 2) { // MODERATE
+      } else if (val === 2) {
         if (axEl) axEl.value = 0.25;
         if (ayEl) ayEl.value = 0.25;
         if (azEl) azEl.value = 1.05;
-      } else { // REST / LIGHT
+      } else {
         if (axEl) axEl.value = 0.02;
         if (ayEl) ayEl.value = 0.01;
         if (azEl) azEl.value = 0.98;
@@ -1001,7 +900,6 @@ function initTestLabControls() {
     });
   }
 
-  // Acceleration inputs change
   ["ctrl-ax", "ctrl-ay", "ctrl-az"].forEach((id) => {
     document.getElementById(id)?.addEventListener("input", () => {
       const ax = parseFloat(document.getElementById("ctrl-ax")?.value || 0.02);
@@ -1014,12 +912,10 @@ function initTestLabControls() {
     });
   });
 
-  // GPS inputs change
   ["ctrl-lat", "ctrl-lon"].forEach((id) => {
     document.getElementById(id)?.addEventListener("input", triggerSimulatorDispatch);
   });
 
-  // Preset Buttons
   document.querySelectorAll(".btn-preset[data-preset]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const presetKey = btn.getAttribute("data-preset");
@@ -1027,30 +923,27 @@ function initTestLabControls() {
     });
   });
 
-  // Reset to Normal button
   document.getElementById("btn-lab-reset")?.addEventListener("click", () => {
     applyPreset("normal");
   });
 
-  // Trigger Next Risk Level
   document.getElementById("btn-trigger-next-level")?.addEventListener("click", () => {
     state.escalationStepIndex = (state.escalationStepIndex + 1) % ESCALATION_CHAIN.length;
     const nextPreset = ESCALATION_CHAIN[state.escalationStepIndex];
     applyPreset(nextPreset);
     const logEl = document.getElementById("lab-action-log");
     if (logEl) {
-      logEl.innerText = `Triggered step ${state.escalationStepIndex + 1}/${ESCALATION_CHAIN.length}: Scenario "${nextPreset.toUpperCase().replace("_", " ")}"`;
+      logEl.innerText = `Simulating: ${nextPreset.replace("_", " ")}`;
     }
   });
 
-  // Return to Baseline
   document.getElementById("btn-return-baseline")?.addEventListener("click", () => {
     state.escalationStepIndex = 0;
     applyPreset("recovery");
     setTimeout(() => applyPreset("normal"), 1500);
     const logEl = document.getElementById("lab-action-log");
     if (logEl) {
-      logEl.innerText = `Returning to baseline: Executing recovery decay -> Nominal baseline.`;
+      logEl.innerText = "Returning vitals to baseline.";
     }
   });
 }
@@ -1078,8 +971,8 @@ function applyPreset(presetKey) {
   if (actSelect) {
     actSelect.value = p.activity_level !== undefined ? p.activity_level : 0;
     const actChip = document.getElementById("ctrl-activity-chip");
-    const labels = ["REST", "LIGHT", "MODERATE", "HIGH", "FALL_CANDIDATE"];
-    if (actChip) actChip.innerText = labels[p.activity_level] || "REST";
+    const labels = ["Rest", "Light", "Moderate", "Vigorous", "Fall candidate"];
+    if (actChip) actChip.innerText = labels[p.activity_level] || "Rest";
   }
 
   const axEl = document.getElementById("ctrl-ax");
@@ -1095,15 +988,10 @@ function applyPreset(presetKey) {
     magLabel.innerText = `Mag: ${mag}g`;
   }
 
-  // Highlight active preset button
   document.querySelectorAll(".btn-preset[data-preset]").forEach((btn) => {
-    if (btn.getAttribute("data-preset") === presetKey) {
-      btn.style.borderColor = "var(--border-focus)";
-      btn.style.backgroundColor = "var(--accent-subtle)";
-    } else {
-      btn.style.borderColor = "";
-      btn.style.backgroundColor = "";
-    }
+    const isActive = btn.getAttribute("data-preset") === presetKey;
+    btn.style.borderColor = isActive ? "var(--border-focus)" : "";
+    btn.style.backgroundColor = isActive ? "var(--bg-hover)" : "";
   });
 
   dispatchSimulatorReading();
@@ -1113,7 +1001,7 @@ function triggerSimulatorDispatch() {
   clearTimeout(state.debounceTimer);
   state.debounceTimer = setTimeout(() => {
     dispatchSimulatorReading();
-  }, 90); // 90ms debounce for responsive slider feel
+  }, 90);
 }
 
 async function dispatchSimulatorReading() {
@@ -1150,7 +1038,6 @@ async function dispatchSimulatorReading() {
   }
 }
 
-// --- 8. Risk Matrix Row Click Inspector Modal ---
 function initMatrixDetailModal() {
   const box = document.getElementById("matrix-detail-box");
   const closeBtn = document.getElementById("btn-close-md");
@@ -1167,13 +1054,10 @@ function initMatrixDetailModal() {
 
       box.classList.remove("hidden");
       const title = document.getElementById("md-title");
-      if (title) title.innerText = `${key.replace(/_/g, " ").toUpperCase()} DETAILS`;
-
-      const confEl = document.getElementById("md-conf");
-      if (confEl) confEl.innerText = `${Math.round((modelData.confidence || 0.95) * 100)}%`;
+      if (title) title.innerText = key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
       const verEl = document.getElementById("md-version");
-      if (verEl) verEl.innerText = ml.model_version || "1.0.0-edge";
+      if (verEl) verEl.innerText = ml.model_version || "v1.0";
 
       const timeEl = document.getElementById("md-time");
       if (timeEl) timeEl.innerText = new Date().toLocaleTimeString();
@@ -1182,8 +1066,7 @@ function initMatrixDetailModal() {
       if (featList) {
         featList.innerHTML = "";
         const feats = modelData.contributing_features?.top_drivers || [
-          "Feature attribution nominal.",
-          "Temporal persistence confirmed."
+          "Feature within baseline tolerance."
         ];
         feats.forEach((f) => {
           const li = document.createElement("li");
@@ -1194,8 +1077,6 @@ function initMatrixDetailModal() {
     });
   });
 }
-
-// --- 9. Real-Time Canvas Oscilloscopes ---
 
 let overviewCanvas, overviewCtx;
 let monitorCanvas, monitorCtx;
@@ -1214,7 +1095,6 @@ function initCanvasCharts() {
 }
 
 function initOverviewChartTabs() {
-  // Signal selection tabs
   document.querySelectorAll("#chart-tabs .chart-tab").forEach((tab) => {
     tab.addEventListener("click", () => {
       document.querySelectorAll("#chart-tabs .chart-tab").forEach((t) => t.classList.remove("active"));
@@ -1224,7 +1104,6 @@ function initOverviewChartTabs() {
     });
   });
 
-  // Time range buttons
   document.querySelectorAll(".time-range-buttons .range-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       document.querySelectorAll(".time-range-buttons .range-btn").forEach((b) => b.classList.remove("active"));
@@ -1253,7 +1132,6 @@ function recordTrendDataPoint(raw, feat, overall) {
   }
 }
 
-// Render Oscilloscope 1 (Overview View)
 function renderOverviewChart() {
   if (!overviewCanvas || !overviewCtx) return;
 
@@ -1273,12 +1151,10 @@ function renderOverviewChart() {
   const w = rect.width;
   const h = 220;
 
-  // Clear background
-  ctx.fillStyle = "#ffffff";
+  ctx.fillStyle = "#111318";
   ctx.fillRect(0, 0, w, h);
 
-  // Background Grid Lines
-  ctx.strokeStyle = "#f1f5f9";
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.04)";
   ctx.lineWidth = 1;
 
   for (let y = 30; y < h; y += 35) {
@@ -1297,52 +1173,47 @@ function renderOverviewChart() {
   const signal = state.selectedOverviewSignal;
   const data = state.trendHistory;
 
-  // Signal configuration
   const signalConfigs = {
-    hr: { min: 40, max: 180, unit: "BPM", baseKey: "heart_rate", color: "#2563eb", baseMean: 72.0 },
-    spo2: { min: 70, max: 100, unit: "%", baseKey: "spo2", color: "#16a34a", baseMean: 98.0 },
-    body_temperature: { min: 34.0, max: 42.0, unit: "°C", baseKey: "body_temperature", color: "#ea580c", baseMean: 36.7 },
-    ambient_temperature: { min: 15.0, max: 50.0, unit: "°C", baseKey: null, color: "#9333ea", baseMean: 28.0 },
-    humidity: { min: 10, max: 100, unit: "%", baseKey: null, color: "#0891b2", baseMean: 60.0 },
-    mq45: { min: 50, max: 1000, unit: "", baseKey: null, color: "#db2777", baseMean: 180.0 },
-    overall_risk: { min: 0.0, max: 1.0, unit: "", baseKey: null, color: "#ef4444", baseMean: 0.10 },
+    hr: { min: 40, max: 180, unit: "BPM", color: "#3b82f6", baseMean: 72.0 },
+    spo2: { min: 70, max: 100, unit: "%", color: "#10b981", baseMean: 98.0 },
+    body_temperature: { min: 34.0, max: 42.0, unit: "°C", color: "#f59e0b", baseMean: 36.7 },
+    ambient_temperature: { min: 15.0, max: 50.0, unit: "°C", color: "#8e95a5", baseMean: 28.0 },
+    humidity: { min: 10, max: 100, unit: "%", color: "#3b82f6", baseMean: 60.0 },
+    mq45: { min: 50, max: 1000, unit: "", color: "#ef4444", baseMean: 180.0 },
+    overall_risk: { min: 0.0, max: 1.0, unit: "", color: "#ef4444", baseMean: 0.10 },
   };
 
   const cfg = signalConfigs[signal] || signalConfigs.hr;
 
-  // Update Meta Bar Below Chart
   const currVal = data.length > 0 ? data[data.length - 1][signal] : cfg.baseMean;
   const baseVal = cfg.baseMean;
   const dev = currVal - baseVal;
-  const devPct = ((dev / (baseVal || 1)) * 100).toFixed(1);
+  const devPct = Math.round((dev / (baseVal || 1)) * 100);
 
   const curEl = document.getElementById("chart-current-val");
-  if (curEl) curEl.innerText = `${typeof currVal === "number" ? currVal.toFixed(1) : currVal} ${cfg.unit}`;
+  if (curEl) curEl.innerText = `${typeof currVal === "number" ? Math.round(currVal) : currVal} ${cfg.unit}`;
 
   const baseEl = document.getElementById("chart-baseline-val");
-  if (baseEl) baseEl.innerText = `${baseVal.toFixed(1)} ${cfg.unit}`;
+  if (baseEl) baseEl.innerText = `${Math.round(baseVal)} ${cfg.unit}`;
 
   const devEl = document.getElementById("chart-dev-val");
-  if (devEl) devEl.innerText = `${dev >= 0 ? "+" : ""}${dev.toFixed(1)} ${cfg.unit} (${dev >= 0 ? "+" : ""}${devPct}%)`;
+  if (devEl) devEl.innerText = `${dev >= 0 ? "+" : ""}${Math.round(dev)} ${cfg.unit} (${dev >= 0 ? "+" : ""}${devPct}%)`;
 
-  // Draw Personal Baseline Dotted Reference Line
   const normBaseY = 1 - (baseVal - cfg.min) / (cfg.max - cfg.min);
   const baseY = Math.max(15, Math.min(h - 15, normBaseY * (h - 30) + 15));
 
-  ctx.setLineDash([5, 5]);
-  ctx.strokeStyle = "#94a3b8";
-  ctx.lineWidth = 1.2;
+  ctx.setLineDash([4, 4]);
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
+  ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(0, baseY);
   ctx.lineTo(w, baseY);
   ctx.stroke();
   ctx.setLineDash([]);
 
-  // Draw Signal Waveform Line
   if (data.length >= 2) {
     const stepX = w / (state.maxTrendHistory - 1);
 
-    // Gradient Fill
     ctx.beginPath();
     data.forEach((pt, i) => {
       const val = pt[signal] !== undefined ? pt[signal] : baseVal;
@@ -1357,15 +1228,14 @@ function renderOverviewChart() {
     ctx.closePath();
 
     const grad = ctx.createLinearGradient(0, 0, 0, h);
-    grad.addColorStop(0, "rgba(37, 99, 235, 0.12)");
-    grad.addColorStop(1, "rgba(37, 99, 235, 0.0)");
+    grad.addColorStop(0, "rgba(59, 130, 246, 0.12)");
+    grad.addColorStop(1, "rgba(59, 130, 246, 0.0)");
     ctx.fillStyle = grad;
     ctx.fill();
 
-    // Solid Waveform Curve
     ctx.beginPath();
     ctx.strokeStyle = cfg.color;
-    ctx.lineWidth = 2.2;
+    ctx.lineWidth = 1.8;
     data.forEach((pt, i) => {
       const val = pt[signal] !== undefined ? pt[signal] : baseVal;
       const normY = 1 - (val - cfg.min) / (cfg.max - cfg.min);
@@ -1376,7 +1246,6 @@ function renderOverviewChart() {
     });
     ctx.stroke();
 
-    // Current Value Dot at End
     const lastX = (data.length - 1) * stepX;
     const lastVal = data[data.length - 1][signal];
     const lastNormY = 1 - (lastVal - cfg.min) / (cfg.max - cfg.min);
@@ -1384,17 +1253,13 @@ function renderOverviewChart() {
 
     ctx.fillStyle = cfg.color;
     ctx.beginPath();
-    ctx.arc(lastX, lastY, 4.5, 0, Math.PI * 2);
+    ctx.arc(lastX, lastY, 4, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
   }
 
   ctx.restore();
 }
 
-// Render Oscilloscope 2 (Live Monitor View)
 function renderMonitorWaveforms() {
   if (!monitorCanvas || !monitorCtx) return;
 
@@ -1414,11 +1279,10 @@ function renderMonitorWaveforms() {
   const w = rect.width;
   const h = 320;
 
-  // Dark industrial oscilloscope grid
-  ctx.fillStyle = "#090d16";
+  ctx.fillStyle = "#090a0f";
   ctx.fillRect(0, 0, w, h);
 
-  ctx.strokeStyle = "#131c2e";
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.04)";
   ctx.lineWidth = 1;
 
   for (let y = 30; y < h; y += 40) {
@@ -1442,8 +1306,7 @@ function renderMonitorWaveforms() {
 
   const stepX = w / (state.maxTrendHistory - 1);
 
-  // Helper to draw a signal waveform
-  function drawTrace(key, min, max, color, lineWidth = 1.8) {
+  function drawTrace(key, min, max, color, lineWidth = 1.5) {
     ctx.beginPath();
     ctx.strokeStyle = color;
     ctx.lineWidth = lineWidth;
@@ -1461,26 +1324,22 @@ function renderMonitorWaveforms() {
     ctx.stroke();
   }
 
-  // Draw 4 monitor waveforms
-  drawTrace("hr", 40, 160, "#38bdf8", 1.8);        // Sky Blue Heart Rate
-  drawTrace("spo2", 75, 100, "#22c55e", 1.8);      // Emerald Green SpO2
-  drawTrace("body_temperature", 35.0, 41.0, "#f59e0b", 1.6); // Amber Temperature
-  drawTrace("overall_risk", 0.0, 1.0, "#ef4444", 2.2);       // Red Overall Risk Line
+  drawTrace("hr", 40, 160, "#3b82f6", 1.5);
+  drawTrace("spo2", 75, 100, "#10b981", 1.5);
+  drawTrace("body_temperature", 35.0, 41.0, "#f59e0b", 1.5);
+  drawTrace("overall_risk", 0.0, 1.0, "#ef4444", 2.0);
 
   ctx.restore();
 }
 
-// --- 10. Initial Data Fetch ---
 async function fetchInitialData() {
   try {
-    // 1. Fetch latest sensor reading
     const readRes = await fetch("/api/sensors/latest");
     if (readRes.ok) {
       const reading = await readRes.json();
       syncSimulatorValues(reading);
     }
 
-    // 2. Fetch baseline
     const baseRes = await fetch("/api/baseline");
     if (baseRes.ok) {
       state.baselineStats = await baseRes.json();
@@ -1490,20 +1349,18 @@ async function fetchInitialData() {
           const el = document.getElementById(id);
           if (el) el.innerText = val;
         };
-        setT("lb-base-hr", `${stats.heart_rate.mean.toFixed(1)} BPM`);
-        setT("lb-base-spo2", `${stats.spo2.mean.toFixed(1)}%`);
+        setT("lb-base-hr", `${Math.round(stats.heart_rate.mean)} BPM`);
+        setT("lb-base-spo2", `${Math.round(stats.spo2.mean)}%`);
         setT("lb-base-temp", `${stats.body_temperature.mean.toFixed(1)}°C`);
       }
     }
 
-    // 3. Fetch device status
     const devRes = await fetch("/api/device/status");
     if (devRes.ok) {
       const dev = await devRes.json();
       updateDeviceDiagnostics(dev.device_status, dev.device_id, dev.last_iot_timestamp);
     }
 
-    // 4. Fetch caretaker alerts history
     fetchAlertHistory();
   } catch (e) {
     console.error("Initial fetch error:", e);
