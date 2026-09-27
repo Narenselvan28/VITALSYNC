@@ -35,3 +35,12 @@ dist/
 *.avi
 *.mov
 *.mkv
+
+# Generated outputs
+backend/ml/metrics_dashboard.png
+
+# One-off / junk files
+sample.txt
+set_ethernet3_ip.ps1
+DESIGN.md
+
