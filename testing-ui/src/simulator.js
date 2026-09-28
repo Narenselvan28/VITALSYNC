@@ -1,4 +1,4 @@
-import { api } from './api.js';
+import { api, API_BASE } from './api.js';
 
 export const PRESETS = {
   normal: {
@@ -245,7 +245,7 @@ export class SimulatorController {
     };
 
     try {
-      const res = await fetch('http://localhost:8000/api/sensors/readings', {
+      const res = await fetch(`${API_BASE}/api/sensors/readings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
