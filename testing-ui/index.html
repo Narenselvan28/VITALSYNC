@@ -44,7 +44,10 @@
           <span class="dot dot-success"></span>
           <span>Node: <strong>Pi 4</strong></span>
         </div>
-        <a href="/" class="nav-link font-sans" id="pill-watch-link">Companion view ↗</a>
+        <button type="button" class="nav-tab-btn" id="btn-toggle-user-view" aria-pressed="false">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18"/></svg>
+          User View
+        </button>
       </div>
     </header>
 
@@ -698,8 +701,45 @@
 
       </section>
     </main>
+
+    <!-- ═══ USER VIEW OVERLAY ═══ -->
+    <div id="user-view-overlay" class="user-view-overlay hidden" role="dialog" aria-label="User companion view" aria-modal="true">
+      <div class="user-view-header">
+        <div class="user-view-title">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18"/></svg>
+          <span>User Companion View</span>
+          <span class="user-view-tag font-mono">Patient POV</span>
+        </div>
+        <div class="user-view-actions">
+          <span class="font-mono text-xs text-muted" id="user-view-url-label"></span>
+          <button type="button" class="btn btn-sm btn-secondary" id="btn-user-view-reload"
+            title="Reload iframe">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
+            Reload
+          </button>
+          <button type="button" class="btn btn-sm btn-ghost" id="btn-close-user-view" aria-label="Close user view">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            Close
+          </button>
+        </div>
+      </div>
+      <div class="user-view-body">
+        <iframe
+          id="user-view-iframe"
+          class="user-view-iframe"
+          title="VitalSync User Companion Interface"
+          allowfullscreen
+          loading="eager"
+        ></iframe>
+        <div class="user-view-loading" id="user-view-loading">
+          <div class="spinner"></div>
+          <span class="font-mono text-sm text-muted">Loading companion UI...</span>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script type="module" src="/src/main.js"></script>
+  <script type="module" src="/src/user_view.js"></script>
 </body>
 </html>

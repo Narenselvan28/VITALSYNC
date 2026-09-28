@@ -1083,3 +1083,124 @@ button:focus-visible, input:focus-visible {
   border-color: var(--danger);
   color: var(--danger);
 }
+
+/* ═══ NAV TAB BUTTON ═══ */
+.nav-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.nav-tab-btn:hover {
+  color: var(--text-main);
+  border-color: rgba(255,255,255,0.18);
+  background: var(--surface-hover);
+}
+.nav-tab-btn.active {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: rgba(59, 130, 246, 0.08);
+}
+
+/* ═══ USER VIEW OVERLAY ═══ */
+.user-view-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  background: var(--bg-app);
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.22s ease, transform 0.22s ease;
+  pointer-events: none;
+}
+.user-view-overlay.user-view-open {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: all;
+}
+.user-view-overlay.hidden {
+  display: none !important;
+}
+
+.user-view-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+  gap: 12px;
+}
+.user-view-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+.user-view-tag {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: rgba(59, 130, 246, 0.12);
+  color: var(--accent);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+}
+.user-view-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-view-body {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: #0d0e14;
+}
+.user-view-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
+/* Loading state */
+.user-view-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  background: var(--bg-app);
+  z-index: 1;
+}
+.user-view-loading.hidden { display: none !important; }
+
+/* Spinner */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.spinner {
+  width: 28px;
+  height: 28px;
+  border: 2.5px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
