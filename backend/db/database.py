@@ -10,8 +10,13 @@ import datetime
 import pymongo
 from typing import Dict, Any, List, Optional
 
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://127.0.0.1:27017/")
-DB_NAME = os.getenv("DB_NAME", "vitalsync")
+_MODE = os.getenv("DATABASE_MODE", "atlas").lower()
+if _MODE == "local":
+    MONGO_URI = os.getenv("MONGODB_LOCAL_URI", "mongodb://127.0.0.1:27017/")
+else:
+    MONGO_URI = os.getenv("MONGODB_ATLAS_URI", os.getenv("MONGODB_LOCAL_URI", "mongodb://127.0.0.1:27017/"))
+DB_NAME = os.getenv("MONGODB_DB_NAME", "vitalsync")
+_TIMEOUT_MS = int(os.getenv("MONGODB_CONNECTION_TIMEOUT_MS", "5000"))
 
 class Database:
     def __init__(self):
@@ -22,7 +27,7 @@ class Database:
 
     def _connect(self):
         try:
-            self.client = pymongo.MongoClient(MONGO_URI, serverSelectionTimeoutMS=2000)
+            self.client = pymongo.MongoClient(MONGO_URI, serverSelectionTimeoutMS=_TIMEOUT_MS)
             # Trigger server selection
             self.client.server_info()
             self.db = self.client[DB_NAME]
